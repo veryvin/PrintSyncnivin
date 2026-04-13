@@ -34,23 +34,31 @@ export default function AdminProducts() {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    
-    // Convert image to base64
-    let imageBase64 = null;
-    if (formData.image) {
+  e.preventDefault();
+  let imageBase64 = null;
+  if (formData.image) {
+    imageBase64 = await new Promise((resolve) => {
       const reader = new FileReader();
-      reader.onload = async (event) => {
-        imageBase64 = event.target.result;
-        submitProduct(imageBase64);
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let w = img.width, h = img.height;
+          const max = 500;
+          if (w > h && w > max) { h = (h * max) / w; w = max; }
+          else if (h > max) { w = (w * max) / h; h = max; }
+          canvas.width = w;
+          canvas.height = h;
+          canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+          resolve(canvas.toDataURL('image/jpeg', 0.4));
+        };
+        img.src = e.target.result;
       };
       reader.readAsDataURL(formData.image);
-      return;
-    }
-    
-    submitProduct(imageBase64);
-  };
-
+    });
+  }
+  submitProduct(imageBase64);
+};
   const submitProduct = async (imageBase64) => {
     try {
       const submitData = {
@@ -62,7 +70,7 @@ export default function AdminProducts() {
       };
 
       if (editingId) {
-        await apiClient.put(`/products/₱{editingId}`, submitData);
+        await apiClient.put(`/products/${editingId}`, submitData);
         toast.success('Product updated successfully');
       } else {
         await apiClient.post('/products', submitData);
@@ -82,7 +90,7 @@ export default function AdminProducts() {
   const handleDelete = async (id) => {
     if (window.confirm('Are you sure?')) {
       try {
-        await apiClient.delete(`/products/₱{id}`);
+        await apiClient.delete(`/products/${id}`);
         toast.success('Product deleted');
         fetchProducts();
       } catch (error) {

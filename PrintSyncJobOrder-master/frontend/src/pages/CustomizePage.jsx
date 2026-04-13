@@ -4,190 +4,212 @@ import { useAuthStore } from '../store/authStore';
 import apiClient from '../utils/apiClient';
 import toast from 'react-hot-toast';
 
+// ── Icons ────────────────────────────────────────────────────────────────────
+const ColorsIcon = () => (
+  <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+    <circle cx="12" cy="12" r="10" /><circle cx="12" cy="12" r="4" />
+  </svg>
+);
+const TextIcon = () => (
+  <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h8M4 18h12" />
+  </svg>
+);
+const UploadIcon = () => (
+  <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12" />
+  </svg>
+);
+const RotateLeftIcon = () => (
+  <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" d="M2.5 2v6h6M2.66 15.57a10 10 0 1 0 .57-8.38" />
+  </svg>
+);
+const RotateRightIcon = () => (
+  <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38" />
+  </svg>
+);
+const CartIcon = () => (
+  <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4zM3 6h18M16 10a4 4 0 01-8 0" />
+  </svg>
+);
+const SaveIcon = () => (
+  <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z" /><path strokeLinecap="round" strokeLinejoin="round" d="M17 21v-8H7v8M7 3v5h8" />
+  </svg>
+);
+
+// ── Jersey SVG — Front ───────────────────────────────────────────────────────
+const JerseyFront = ({ primaryColor, accentColor, customText, number, logoPreview }) => (
+  <svg viewBox="0 0 300 360" xmlns="http://www.w3.org/2000/svg" className="w-full h-full drop-shadow-xl">
+    <path d="M75 60 L30 90 L20 150 L60 155 L60 320 L240 320 L240 155 L280 150 L270 90 L225 60 C210 80 90 80 75 60Z"
+      fill={primaryColor} stroke={accentColor} strokeWidth="3" />
+    <path d="M120 60 Q150 85 180 60" fill="none" stroke={accentColor} strokeWidth="3" />
+    <path d="M75 60 L30 90 L20 150 L60 155 L60 100Z" fill={accentColor} opacity="0.3" />
+    <path d="M225 60 L270 90 L280 150 L240 155 L240 100Z" fill={accentColor} opacity="0.3" />
+    <rect x="60" y="155" width="12" height="165" fill={accentColor} opacity="0.5" />
+    <rect x="228" y="155" width="12" height="165" fill={accentColor} opacity="0.5" />
+    {logoPreview ? (
+      <image href={logoPreview} x="125" y="75" width="50" height="50" preserveAspectRatio="xMidYMid meet" />
+    ) : (
+      <circle cx="150" cy="100" r="18" fill="none" stroke={accentColor} strokeWidth="1.5" opacity="0.5" />
+    )}
+    <text x="150" y="195" textAnchor="middle" fill={accentColor} fontSize="22" fontWeight="900"
+      fontFamily="'Arial Black', sans-serif" letterSpacing="2">
+      {customText || 'TEAM NAME'}
+    </text>
+    <text x="150" y="275" textAnchor="middle" fill={accentColor} fontSize="72" fontWeight="900"
+      fontFamily="'Arial Black', sans-serif">
+      {number || '24'}
+    </text>
+    <rect x="60" y="315" width="180" height="5" fill={accentColor} />
+  </svg>
+);
+
+// ── Jersey SVG — Back ────────────────────────────────────────────────────────
+const JerseyBack = ({ primaryColor, accentColor, number }) => (
+  <svg viewBox="0 0 300 360" xmlns="http://www.w3.org/2000/svg" className="w-full h-full drop-shadow-xl">
+    <path d="M75 60 L30 90 L20 150 L60 155 L60 320 L240 320 L240 155 L280 150 L270 90 L225 60 C210 80 90 80 75 60Z"
+      fill={primaryColor} stroke={accentColor} strokeWidth="3" />
+    <path d="M75 60 L30 90 L20 150 L60 155 L60 100Z" fill={accentColor} opacity="0.3" />
+    <path d="M225 60 L270 90 L280 150 L240 155 L240 100Z" fill={accentColor} opacity="0.3" />
+    <rect x="60" y="155" width="12" height="165" fill={accentColor} opacity="0.5" />
+    <rect x="228" y="155" width="12" height="165" fill={accentColor} opacity="0.5" />
+    <text x="150" y="165" textAnchor="middle" fill={accentColor} fontSize="20" fontWeight="900"
+      fontFamily="'Arial Black', sans-serif" letterSpacing="2">
+      SURNAME
+    </text>
+    <text x="150" y="275" textAnchor="middle" fill={accentColor} fontSize="72" fontWeight="900"
+      fontFamily="'Arial Black', sans-serif">
+      {number || '24'}
+    </text>
+    <rect x="60" y="315" width="180" height="5" fill={accentColor} />
+  </svg>
+);
+
+// ── Color Palettes ────────────────────────────────────────────────────────────
+const COLOR_PALETTE_1 = ['#000000', '#ffffff', '#1a1a1a', '#808080', '#cccccc', '#ff0000', '#0000ff', '#008000'];
+const COLOR_PALETTE_2 = ['#000000', '#ffffff', '#f5e6a3', '#f97316', '#ffff00', '#ffcc00', '#ff0000', '#0000ff'];
+const COLOR_PALETTE_EXTRA = [
+  '#ffffff', '#ff6600', '#00cc00', '#ffff00',
+  '#ff00ff', '#00ffff', '#ff6600', '#ff99cc',
+  '#99ccff',
+];
+const FONTS = ['INDUSTRIAL SANS', 'IMPACT', 'ARIAL BLACK', 'BEBAS NEUE', 'OSWALD'];
+
 export default function CustomizePage() {
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuthStore();
+
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
-  // Step 1: Color Palettes + Quantity
-  const [primaryColor, setPrimaryColor] = useState('#000000');
-  const [accentColor, setAccentColor] = useState('#FFFFFF');
-  const [additionalColor1, setAdditionalColor1] = useState('');
-  const [additionalColor2, setAdditionalColor2] = useState('');
-  const [additionalColor3, setAdditionalColor3] = useState('');
-  const [quantity, setQuantity] = useState('');
-  
-  // Step 2: Text
+  const [showReview, setShowReview] = useState(false);
+
+  const [activeTab, setActiveTab] = useState('colors');
+  const [viewSide, setViewSide] = useState('front');
+
+  const [primaryColor, setPrimaryColor] = useState('#ffffff');
+  const [accentColor, setAccentColor] = useState('#f5e6a3');
+  const [color1, setColor1] = useState('#ffffff');
+  const [color2, setColor2] = useState('#ffffff');
+  const [color3, setColor3] = useState('#ffffff');
+
   const [customText, setCustomText] = useState('');
+  const [jerseyNumber, setJerseyNumber] = useState('24');
+  const [fontFamily, setFontFamily] = useState('INDUSTRIAL SANS');
   const [jerseyLayoutComments, setJerseyLayoutComments] = useState('');
-  
-  // Step 3: Logo/Image
+
   const [logoFile, setLogoFile] = useState(null);
   const [logoPreview, setLogoPreview] = useState(null);
-  
-  // Step 4: Customer Details
+
+  const [quantity, setQuantity] = useState(1);
   const [phoneNumber, setPhoneNumber] = useState('');
-  const [orderType, setOrderType] = useState('pickup'); // pickup or shipping
+  const [orderType, setOrderType] = useState('pickup');
   const [shippingAddress, setShippingAddress] = useState({
-    firstName: '',
-    lastName: '',
-    company: '',
-    street: '',
-    city: '',
-    stateProvince: '',
-    zipCode: '',
+    firstName: '', lastName: '', company: '', street: '', city: '', stateProvince: '', zipCode: '',
   });
-  
-  // Order details
-  const [totalPrice, setTotalPrice] = useState(0);
+
+  const totalPrice = selectedProduct ? (selectedProduct.price * (quantity || 0)).toFixed(2) : '0.00';
 
   useEffect(() => {
     fetchProducts();
-    if (location.state?.selectedProduct) {
-      setSelectedProduct(location.state.selectedProduct);
-    }
+    if (location.state?.selectedProduct) setSelectedProduct(location.state.selectedProduct);
   }, []);
-
-  useEffect(() => {
-    if (selectedProduct) {
-      const qty = quantity === '' ? 0 : quantity;
-      setTotalPrice((selectedProduct.price * qty).toFixed(2));
-    }
-  }, [selectedProduct, quantity]);
 
   const fetchProducts = async () => {
     try {
       const response = await apiClient.get('/products');
       setProducts(response.data);
-      setLoading(false);
     } catch (error) {
       toast.error('Failed to load products');
+    } finally {
       setLoading(false);
     }
   };
 
-  const compressImage = (file, callback) => {
+  const compressImage = (file) => new Promise((resolve) => {
     const reader = new FileReader();
     reader.onload = (e) => {
       const img = new Image();
       img.onload = () => {
-        // Create canvas and compress
         const canvas = document.createElement('canvas');
-        let width = img.width;
-        let height = img.height;
-        
-        // Resize to max 800x800 while maintaining aspect ratio
-        const maxSize = 800;
-        if (width > height) {
-          if (width > maxSize) {
-            height = (height * maxSize) / width;
-            width = maxSize;
-          }
-        } else {
-          if (height > maxSize) {
-            width = (width * maxSize) / height;
-            height = maxSize;
-          }
-        }
-        
-        canvas.width = width;
-        canvas.height = height;
-        
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0, width, height);
-        
-        // Convert to base64 with compression (quality 0.7)
-        const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
-        callback(compressedBase64);
+        let w = img.width, h = img.height;
+        const max = 600;
+        if (w > h && w > max) { h = (h * max) / w; w = max; }
+        else if (h > max) { w = (w * max) / h; h = max; }
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL('image/jpeg', 0.6));
       };
       img.src = e.target.result;
     };
     reader.readAsDataURL(file);
-  };
+  });
 
-  const handleLogoUpload = (e) => {
+  const handleLogoUpload = async (e) => {
     const file = e.target.files[0];
-    if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        toast.error('Image must be less than 5MB');
-        return;
-      }
-      setLogoFile(file);
-      
-      // Compress and create preview
-      compressImage(file, (compressedBase64) => {
-        setLogoPreview(compressedBase64);
-      });
-    }
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) { toast.error('Image must be less than 5MB'); return; }
+    setLogoFile(file);
+    const compressed = await compressImage(file);
+    setLogoPreview(compressed);
   };
 
   const handlePlaceOrder = async () => {
-    if (!selectedProduct) {
-      toast.error('Please select a product');
-      return;
-    }
-
-    if (quantity === '' || quantity < 1 || quantity > 100) {
-      toast.error('Quantity must be between 1 and 100');
-      return;
-    }
-
-    if (!phoneNumber || phoneNumber.trim() === '') {
-      toast.error('Please enter your phone number');
-      return;
-    }
-
+    if (!selectedProduct) { toast.error('Please select a product'); return; }
+    if (!quantity || quantity < 1) { toast.error('Please enter a valid quantity'); return; }
+    if (!phoneNumber.trim()) { toast.error('Please enter your phone number'); return; }
     if (orderType === 'shipping') {
       const { firstName, lastName, street, city, stateProvince, zipCode } = shippingAddress;
       if (!firstName || !lastName || !street || !city || !stateProvince || !zipCode) {
-        toast.error('Please fill out all required shipping address fields');
-        return;
+        toast.error('Please fill out all shipping address fields'); return;
       }
     }
-
-    if (step !== 5) {
-      toast.error('Complete all steps and review');
-      return;
-    }
-
     setIsSubmitting(true);
     try {
-      const orderData = {
+      await apiClient.post('/orders', {
         userId: user.uid,
         customerName: user.displayName || user.email,
         customerEmail: user.email,
         phoneNumber,
         orderType,
         shippingAddress: orderType === 'shipping' ? shippingAddress : null,
-        items: [{
-          productId: selectedProduct.id,
-          productName: selectedProduct.name,
-          quantity: parseInt(quantity),
-          price: selectedProduct.price,
-        }],
+        items: [{ productId: selectedProduct.id, productName: selectedProduct.name, quantity: parseInt(quantity), price: selectedProduct.price }],
         customizationDetails: {
-          primaryColor,
-          accentColor,
-          additionalColors: {
-            color1: additionalColor1,
-            color2: additionalColor2,
-            color3: additionalColor3,
-          },
-          customText,
-          jerseyLayoutComments,
-          logoImage: logoPreview || null,
+          primaryColor, accentColor,
+          additionalColors: { color1, color2, color3 },
+          customText, jerseyNumber, fontFamily, jerseyLayoutComments,
+          logoImage: logoPreview || null
         },
         totalPrice: parseFloat(totalPrice),
         status: 'pending',
-      };
-
-      await apiClient.post('/orders', orderData);
-      toast.success('Order placed successfully! Admin will review it soon.');
+      });
+      toast.success('Order placed! Admin will review it soon.');
       navigate('/orders');
     } catch (error) {
       toast.error('Failed to place order: ' + error.message);
@@ -196,748 +218,378 @@ export default function CustomizePage() {
     }
   };
 
-  return (
-    <div className="min-h-screen bg-light py-12">
-      <div className="max-w-7xl mx-auto px-6">
-        <h1 className="text-4xl font-bold text-primary mb-2">Design Studio</h1>
-        <p className="text-gray-600 mb-8">Configure your custom apparel specifications</p>
+  // ── Color Swatch Picker ──────────────────────────────────────────────────
+  const ColorSwatch = ({ palette, selected, onSelect }) => (
+    <div className="grid grid-cols-4 gap-1.5">
+      {palette.map(color => (
+        <button key={color} onClick={() => onSelect(color)}
+          className={`w-full aspect-square border-2 transition ${selected === color ? 'border-[#111] scale-110' : 'border-transparent'}`}
+          style={{ backgroundColor: color, boxShadow: color === '#ffffff' ? 'inset 0 0 0 1px #ddd' : '' }}
+        />
+      ))}
+    </div>
+  );
 
-        {loading ? (
-          <div className="flex justify-center items-center h-96">
-            <div className="animate-spin rounded-full h-12 w-12 border-2 border-border border-t-primary"></div>
+  if (loading) return (
+    <div className="flex justify-center items-center h-screen">
+      <div className="animate-spin rounded-full h-12 w-12 border-2 border-gray-200 border-t-[#111]" />
+    </div>
+  );
+
+  // ── REVIEW PAGE ──────────────────────────────────────────────────────────
+  if (showReview) return (
+    <div className="min-h-screen bg-gray-50 py-12">
+      <div className="max-w-2xl mx-auto px-6">
+        <div className="bg-white border border-gray-200 p-8">
+          <h2 className="text-2xl font-black text-[#111] uppercase mb-6">Review Your Order</h2>
+
+          <div className="space-y-4 mb-8">
+            <div className="flex justify-between py-3 border-b border-gray-100">
+              <span className="text-xs text-gray-500 uppercase tracking-wider">Product</span>
+              <span className="text-sm font-bold">{selectedProduct?.name}</span>
+            </div>
+            <div className="flex justify-between py-3 border-b border-gray-100">
+              <span className="text-xs text-gray-500 uppercase tracking-wider">Colors</span>
+              <div className="flex gap-2">
+                <div className="w-5 h-5 rounded border border-gray-300" style={{ backgroundColor: primaryColor }} />
+                <div className="w-5 h-5 rounded border border-gray-300" style={{ backgroundColor: accentColor }} />
+                <div className="w-5 h-5 rounded border border-gray-300" style={{ backgroundColor: color1 }} />
+                <div className="w-5 h-5 rounded border border-gray-300" style={{ backgroundColor: color2 }} />
+                <div className="w-5 h-5 rounded border border-gray-300" style={{ backgroundColor: color3 }} />
+              </div>
+            </div>
+            <div className="flex justify-between py-3 border-b border-gray-100">
+              <span className="text-xs text-gray-500 uppercase tracking-wider">Text</span>
+              <span className="text-sm font-bold">{customText || 'TEAM NAME'}</span>
+            </div>
+            <div className="flex justify-between py-3 border-b border-gray-100">
+              <span className="text-xs text-gray-500 uppercase tracking-wider">Number</span>
+              <span className="text-sm font-bold">{jerseyNumber || '24'}</span>
+            </div>
+            <div className="flex justify-between py-3 border-b border-gray-100">
+              <span className="text-xs text-gray-500 uppercase tracking-wider">Logo</span>
+              <span className="text-sm font-bold">{logoFile ? '✓ Uploaded' : 'None'}</span>
+            </div>
+            <div className="flex justify-between py-3 border-b border-gray-100">
+              <span className="text-xs text-gray-500 uppercase tracking-wider">Quantity</span>
+              <span className="text-sm font-bold">{quantity} unit(s)</span>
+            </div>
+            <div className="flex justify-between py-3 border-b border-gray-100">
+              <span className="text-xs text-gray-500 uppercase tracking-wider">Phone</span>
+              <span className="text-sm font-bold">{phoneNumber}</span>
+            </div>
+            <div className="flex justify-between py-3 border-b border-gray-100">
+              <span className="text-xs text-gray-500 uppercase tracking-wider">Order Type</span>
+              <span className="text-sm font-bold capitalize">{orderType === 'pickup' ? 'Pick Up' : 'Shipping'}</span>
+            </div>
           </div>
-        ) : step === 5 ? (
-          /* Step 5: Review & Confirmation */
-          <div className="max-w-2xl mx-auto">
-            <div className="bg-white rounded-lg border border-border p-8">
-              <h2 className="text-2xl font-bold text-primary mb-6">Review Your Order</h2>
-              
-              {/* Product Selection */}
-              <div className="mb-6 pb-6 border-b border-border">
-                <p className="text-xs text-gray-600 mb-2">PRODUCT</p>
-                <p className="text-lg font-semibold text-primary">{selectedProduct?.name}</p>
-                <p className="text-sm text-gray-600">₱{selectedProduct?.price}</p>
+
+          <div className="bg-gray-50 p-4 mb-6">
+            <div className="flex justify-between mb-2 text-sm">
+              <span className="text-gray-500">Unit Price</span>
+              <span>₱{selectedProduct?.price}</span>
+            </div>
+            <div className="flex justify-between mb-2 text-sm">
+              <span className="text-gray-500">Quantity</span>
+              <span>{quantity}x</span>
+            </div>
+            <div className="flex justify-between pt-3 border-t border-gray-200">
+              <span className="font-bold">Total</span>
+              <span className="text-2xl font-black text-[#111]">₱{totalPrice}</span>
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <button onClick={handlePlaceOrder} disabled={isSubmitting}
+              className="w-full py-3 bg-[#111] text-white font-bold text-sm uppercase tracking-widest hover:bg-gray-800 disabled:opacity-50 transition">
+              {isSubmitting ? 'Placing Order...' : '✓ Confirm & Place Order'}
+            </button>
+            <button onClick={() => setShowReview(false)}
+              className="w-full py-2 border border-gray-300 text-[#111] font-medium text-sm hover:bg-gray-50 transition">
+              ← Back to Design
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  // ── MAIN CUSTOMIZE PAGE ──────────────────────────────────────────────────
+  return (
+    <div className="min-h-screen bg-gray-100">
+      <div className="max-w-7xl mx-auto px-6 py-8">
+        <h1 className="text-3xl font-black text-[#111] uppercase mb-1">Design Studio</h1>
+        <p className="text-xs text-gray-400 uppercase tracking-widest mb-6">Configure your garment specifications</p>
+
+        <div className="flex gap-6">
+
+          {/* ── LEFT PANEL ─────────────────────────────────────────────── */}
+          <div className="w-[200px] shrink-0">
+            <div className="bg-white border border-gray-200">
+
+              {/* Tabs */}
+              <div className="flex border-b border-gray-200">
+                {[
+                  { key: 'colors', label: 'Colors', icon: <ColorsIcon /> },
+                  { key: 'text', label: 'Text', icon: <TextIcon /> },
+                  { key: 'upload', label: 'Upload', icon: <UploadIcon /> },
+                ].map(tab => (
+                  <button key={tab.key} onClick={() => setActiveTab(tab.key)}
+                    className={`flex-1 flex flex-col items-center gap-1 py-3 text-[0.6rem] font-bold uppercase tracking-wide transition ${
+                      activeTab === tab.key ? 'bg-[#111] text-white' : 'text-gray-500 hover:bg-gray-50'
+                    }`}>
+                    {tab.icon}
+                    {tab.label}
+                  </button>
+                ))}
               </div>
 
-              {/* Colors Review */}
-              <div className="mb-6 pb-6 border-b border-border">
-                <p className="text-xs text-gray-600 mb-4">COLORS</p>
-                <div className="flex items-center gap-3 flex-wrap">
-                  <div className="flex flex-col items-center">
-                    <div
-                      className="w-12 h-12 rounded border-2 border-gray-300 mb-2"
-                      style={{ backgroundColor: primaryColor }}
-                    />
-                    <span className="text-xs text-gray-600">Primary</span>
+              {/* Product selector */}
+              <div className="p-3 border-b border-gray-100">
+                <select
+                  value={selectedProduct?.id || ''}
+                  onChange={(e) => setSelectedProduct(products.find(p => p.id === e.target.value))}
+                  className="w-full px-2 py-1.5 border border-gray-200 text-xs text-[#111] focus:outline-none focus:border-[#111]"
+                >
+                  <option value="">Select product...</option>
+                  {products.map(p => (
+                    <option key={p.id} value={p.id}>{p.name} — ₱{p.price}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* ── COLORS TAB ─────────────────────────────────────────── */}
+              {activeTab === 'colors' && (
+                <div className="p-3 space-y-4">
+                  <div>
+                    <p className="text-[0.6rem] font-bold text-gray-500 uppercase tracking-wider mb-2">Primary Base Color</p>
+                    <ColorSwatch palette={COLOR_PALETTE_1} selected={primaryColor} onSelect={setPrimaryColor} />
                   </div>
-                  <div className="flex flex-col items-center">
-                    <div
-                      className="w-12 h-12 rounded border-2 border-gray-300 mb-2"
-                      style={{ backgroundColor: accentColor }}
-                    />
-                    <span className="text-xs text-gray-600">Accent</span>
+                  <div>
+                    <p className="text-[0.6rem] font-bold text-gray-500 uppercase tracking-wider mb-2">Accent Color</p>
+                    <ColorSwatch palette={COLOR_PALETTE_2} selected={accentColor} onSelect={setAccentColor} />
                   </div>
-                  {additionalColor1 && (
-                    <div className="flex flex-col items-center">
-                      <div
-                        className="w-12 h-12 rounded border-2 border-gray-300 mb-2"
-                        style={{ backgroundColor: additionalColor1 }}
-                      />
-                      <span className="text-xs text-gray-600">Add. 1</span>
-                    </div>
-                  )}
-                  {additionalColor2 && (
-                    <div className="flex flex-col items-center">
-                      <div
-                        className="w-12 h-12 rounded border-2 border-gray-300 mb-2"
-                        style={{ backgroundColor: additionalColor2 }}
-                      />
-                      <span className="text-xs text-gray-600">Add. 2</span>
-                    </div>
-                  )}
-                  {additionalColor3 && (
-                    <div className="flex flex-col items-center">
-                      <div
-                        className="w-12 h-12 rounded border-2 border-gray-300 mb-2"
-                        style={{ backgroundColor: additionalColor3 }}
-                      />
-                      <span className="text-xs text-gray-600">Add. 3</span>
-                    </div>
-                  )}
-                </div>
-              </div>
 
-              {/* Text Review */}
-              <div className="mb-6 pb-6 border-b border-border">
-                <p className="text-xs text-gray-600 mb-2">TEXT</p>
-                <p className="text-lg font-semibold text-primary">{customText || 'Not specified'}</p>
-              </div>
+                  {/* Additional Colors */}
+                  <div>
+                    <p className="text-[0.6rem] font-bold text-gray-500 uppercase tracking-wider mb-2">Additional Colors (Optional)</p>
+                    <div className="space-y-3">
+                      <div>
+                        <p className="text-[0.55rem] text-gray-400 uppercase tracking-wider mb-1">Color 1</p>
+                        <ColorSwatch palette={COLOR_PALETTE_EXTRA} selected={color1} onSelect={setColor1} />
+                      </div>
+                      <div>
+                        <p className="text-[0.55rem] text-gray-400 uppercase tracking-wider mb-1">Color 2</p>
+                        <ColorSwatch palette={COLOR_PALETTE_EXTRA} selected={color2} onSelect={setColor2} />
+                      </div>
+                      <div>
+                        <p className="text-[0.55rem] text-gray-400 uppercase tracking-wider mb-1">Color 3</p>
+                        <ColorSwatch palette={COLOR_PALETTE_EXTRA} selected={color3} onSelect={setColor3} />
+                      </div>
+                    </div>
+                  </div>
 
-              {/* Jersey Layout Comments Review */}
-              {jerseyLayoutComments && (
-                <div className="mb-6 pb-6 border-b border-border">
-                  <p className="text-xs text-gray-600 mb-2">LAYOUT NOTES</p>
-                  <p className="text-sm text-primary">{jerseyLayoutComments}</p>
+                  {/* Quantity */}
+                  <div>
+                    <p className="text-[0.6rem] font-bold text-gray-500 uppercase tracking-wider mb-2">Quantity</p>
+                    <input type="number" min="1" max="100" value={quantity}
+                      onChange={(e) => setQuantity(Math.max(1, Math.min(100, parseInt(e.target.value) || 1)))}
+                      className="w-full px-2 py-1.5 border border-gray-200 text-sm text-[#111] focus:outline-none focus:border-[#111]"
+                    />
+                  </div>
+
+                  {/* Phone */}
+                  <div>
+                    <p className="text-[0.6rem] font-bold text-gray-500 uppercase tracking-wider mb-2">Phone *</p>
+                    <input type="tel" value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)}
+                      placeholder="+63 9xx xxx xxxx"
+                      className="w-full px-2 py-1.5 border border-gray-200 text-xs text-[#111] focus:outline-none focus:border-[#111]"
+                    />
+                  </div>
+
+                  {/* Order type */}
+                  <div>
+                    <p className="text-[0.6rem] font-bold text-gray-500 uppercase tracking-wider mb-2">Order Type</p>
+                    <div className="space-y-1">
+                      {[['pickup', 'Pick Up'], ['shipping', 'Shipping']].map(([val, label]) => (
+                        <label key={val} className={`flex items-center gap-2 p-2 border cursor-pointer text-xs transition ${orderType === val ? 'border-[#111] bg-gray-50' : 'border-gray-200'}`}>
+                          <input type="radio" name="orderType" value={val} checked={orderType === val} onChange={() => setOrderType(val)} className="w-3 h-3" />
+                          {label}
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Shipping address */}
+                  {orderType === 'shipping' && (
+                    <div className="space-y-2">
+                      <p className="text-[0.6rem] font-bold text-gray-500 uppercase tracking-wider">Shipping Address</p>
+                      {[
+                        ['firstName', 'First Name *'],
+                        ['lastName', 'Last Name *'],
+                        ['street', 'Street *'],
+                        ['city', 'City *'],
+                        ['stateProvince', 'Province *'],
+                        ['zipCode', 'ZIP *'],
+                      ].map(([field, placeholder]) => (
+                        <input key={field} type="text" placeholder={placeholder}
+                          value={shippingAddress[field]}
+                          onChange={(e) => setShippingAddress({ ...shippingAddress, [field]: e.target.value })}
+                          className="w-full px-2 py-1.5 border border-gray-200 text-xs focus:outline-none focus:border-[#111]"
+                        />
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
 
-              {/* Logo Review */}
-              <div className="mb-6 pb-6 border-b border-border">
-                <p className="text-xs text-gray-600 mb-2">LOGO/IMAGE</p>
-                {logoPreview ? (
-                  <div className="flex items-center gap-4">
-                    <img src={logoPreview} alt="Logo" className="w-16 h-16 object-contain rounded border border-border p-2" />
-                    <span className="text-gray-600">{logoFile?.name}</span>
-                  </div>
-                ) : (
-                  <span className="text-gray-600">No logo uploaded</span>
-                )}
-              </div>
-
-              {/* Quantity Review */}
-              <div className="mb-8 pb-8 border-b border-border">
-                <p className="text-xs text-gray-600 mb-2">QUANTITY</p>
-                <p className="text-lg font-semibold text-primary">{quantity} unit(s)</p>
-              </div>
-
-              {/* Customer Details Review */}
-              <div className="mb-8 pb-8 border-b border-border">
-                <p className="text-xs text-gray-600 mb-3">CUSTOMER DETAILS</p>
-                <div className="space-y-2">
+              {/* ── TEXT TAB ───────────────────────────────────────────── */}
+              {activeTab === 'text' && (
+                <div className="p-3 space-y-4">
                   <div>
-                    <p className="text-xs text-gray-600">Phone Number:</p>
-                    <p className="text-sm font-medium">{phoneNumber || 'Not provided'}</p>
+                    <p className="text-[0.6rem] font-bold text-gray-500 uppercase tracking-wider mb-2">Custom Text</p>
+                    <input type="text" value={customText}
+                      onChange={(e) => setCustomText(e.target.value.toUpperCase())}
+                      placeholder="PRINTSYNC" maxLength="20"
+                      className="w-full px-2 py-1.5 border border-gray-200 text-sm font-bold text-[#111] focus:outline-none focus:border-[#111]"
+                    />
                   </div>
                   <div>
-                    <p className="text-xs text-gray-600">Order Type:</p>
-                    <p className="text-sm font-medium capitalize">{orderType === 'pickup' ? 'Pick Up' : 'Shipping'}</p>
+                    <p className="text-[0.6rem] font-bold text-gray-500 uppercase tracking-wider mb-2">Jersey Number</p>
+                    <input type="text" value={jerseyNumber}
+                      onChange={(e) => setJerseyNumber(e.target.value.replace(/\D/, '').slice(0, 2))}
+                      placeholder="24" maxLength="2"
+                      className="w-full px-2 py-1.5 border border-gray-200 text-sm font-bold text-[#111] focus:outline-none focus:border-[#111]"
+                    />
                   </div>
-                  {orderType === 'shipping' && (
-                    <div>
-                      <p className="text-xs text-gray-600">Shipping Address:</p>
-                      <p className="text-sm font-medium">
-                        {shippingAddress.firstName} {shippingAddress.lastName}
-                      </p>
-                      {shippingAddress.company && (
-                        <p className="text-sm text-gray-600">{shippingAddress.company}</p>
-                      )}
-                      <p className="text-sm text-gray-600">{shippingAddress.street}</p>
-                      <p className="text-sm text-gray-600">
-                        {shippingAddress.city}, {shippingAddress.stateProvince} {shippingAddress.zipCode}
-                      </p>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Price Summary */}
-              <div className="mb-8 p-4 bg-light rounded">
-                <div className="flex justify-between mb-2">
-                  <span className="text-gray-600">Unit Price:</span>
-                  <span className="font-semibold">₱{selectedProduct?.price}</span>
-                </div>
-                <div className="flex justify-between mb-4">
-                  <span className="text-gray-600">Quantity:</span>
-                  <span className="font-semibold">{quantity}x</span>
-                </div>
-                <div className="flex justify-between border-t border-border pt-4">
-                  <span className="font-semibold text-lg">Total:</span>
-                  <span className="text-2xl font-bold text-primary">₱{totalPrice}</span>
-                </div>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="space-y-3">
-                <button
-                  onClick={handlePlaceOrder}
-                  disabled={isSubmitting}
-                  className="w-full px-4 py-3 bg-primary text-white rounded font-medium hover:bg-gray-800 disabled:opacity-50 transition"
-                >
-                  {isSubmitting ? 'Confirming...' : '✓ Confirm & Place Order'}
-                </button>
-                <button
-                  onClick={() => setStep(4)}
-                  className="w-full px-4 py-2 border border-border rounded font-medium text-primary hover:bg-light transition"
-                >
-                  ← Back to Customer Details
-                </button>
-              </div>
-            </div>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Left Sidebar - Configuration */}
-            <div className="lg:col-span-1">
-              <div className="bg-white rounded-lg border border-border overflow-hidden sticky top-24">
-                {/* Step Indicator */}
-                <div className="p-6 border-b border-border">
-                  <div className="flex gap-4 mb-6">
-                    {[1, 2, 3, 4].map(s => (
-                      <button
-                        key={s}
-                        onClick={() => s < step && setStep(s)}
-                        className={`flex items-center justify-center w-10 h-10 rounded-full font-semibold text-sm transition ${
-                          s === step
-                            ? 'bg-primary text-white'
-                            : s < step
-                            ? 'bg-green-500 text-white cursor-pointer'
-                            : 'bg-light text-gray-400'
-                        }`}
-                      >
-                        {s < step ? '✓' : s}
-                      </button>
-                    ))}
-                  </div>
-                  <h3 className="font-semibold text-primary">
-                    {step === 1 && 'Colors & Quantity'}
-                    {step === 2 && 'Text'}
-                    {step === 3 && 'Logo/Image'}
-                    {step === 4 && 'Customer Details'}
-                  </h3>
-                </div>
-
-                {/* Product Selection - Only in Step 1 */}
-                {step === 1 && (
-                  <div className="p-6 border-b border-border">
-                    <label className="block text-xs font-semibold text-gray-600 mb-2">SELECT PRODUCT</label>
-                    <select
-                      value={selectedProduct?.id || ''}
-                      onChange={(e) => {
-                        const product = products.find(p => p.id === e.target.value);
-                        setSelectedProduct(product);
-                      }}
-                      className="w-full px-3 py-2 border border-border rounded text-sm focus:ring-2 focus:ring-primary"
-                    >
-                      <option value="">Choose a product...</option>
-                      {products.map(product => (
-                        <option key={product.id} value={product.id}>
-                          {product.name} - ₱{product.price}
-                        </option>
-                      ))}
+                  <div>
+                    <p className="text-[0.6rem] font-bold text-gray-500 uppercase tracking-wider mb-2">Font Family</p>
+                    <select value={fontFamily} onChange={(e) => setFontFamily(e.target.value)}
+                      className="w-full px-2 py-1.5 border border-gray-200 text-xs text-[#111] focus:outline-none focus:border-[#111]">
+                      {FONTS.map(f => <option key={f}>{f}</option>)}
                     </select>
                   </div>
-                )}
-
-                {/* Step 1: Colors & Quantity */}
-                {step === 1 && (
-                  <div className="p-6 space-y-6 border-b border-border">
-                    <div>
-                      <label className="block text-xs font-semibold text-gray-600 mb-3">PRIMARY BASE COLOR</label>
-                      <div className="grid grid-cols-4 gap-2">
-                        {['#000000', '#ffffff', '#1a1a1a', '#808080', '#cccccc', '#ff9f9f', '#ff0000', '#0000ff'].map(color => (
-                          <button
-                            key={color}
-                            onClick={() => setPrimaryColor(color)}
-                            className={`w-full h-12 rounded border-2 transition ${
-                              primaryColor === color ? 'border-secondary' : 'border-transparent'
-                            }`}
-                            style={{ backgroundColor: color }}
-                            title={color}
-                          />
-                        ))}
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="block text-xs font-semibold text-gray-600 mb-3">ACCENT COLOR</label>
-                      <div className="grid grid-cols-4 gap-2">
-                        {['#000000', '#ffffff', '#1a1a1a', '#f97316', '#ffff00', '#ffcc00', '#ff0000', '#0000ff'].map(color => (
-                          <button
-                            key={color}
-                            onClick={() => setAccentColor(color)}
-                            className={`w-full h-12 rounded border-2 transition ${
-                              accentColor === color ? 'border-secondary' : 'border-transparent'
-                            }`}
-                            style={{ backgroundColor: color }}
-                            title={color}
-                          />
-                        ))}
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="block text-xs font-semibold text-gray-600 mb-3">ADDITIONAL COLORS (OPTIONAL)</label>
-                      
-                      {/* Additional Color 1 */}
-                      <div className="mb-4">
-                        <p className="text-xs text-gray-500 mb-2">Color 1</p>
-                        <div className="grid grid-cols-4 gap-2">
-                          <button
-                            key="none1"
-                            onClick={() => setAdditionalColor1('')}
-                            className={`w-full h-12 rounded border-2 flex items-center justify-center text-xs font-semibold transition ${
-                              additionalColor1 === '' ? 'border-secondary bg-gray-100' : 'border-gray-200'
-                            }`}
-                            title="None"
-                          >
-                            -
-                          </button>
-                          {['#f97316', '#00ff00', '#ffff00', '#ff00ff', '#00ffff', '#ffa500', '#ff69b4', '#87ceeb'].map(color => (
-                            <button
-                              key={color}
-                              onClick={() => setAdditionalColor1(color)}
-                              className={`w-full h-12 rounded border-2 transition ${
-                                additionalColor1 === color ? 'border-secondary' : 'border-transparent'
-                              }`}
-                              style={{ backgroundColor: color }}
-                              title={color}
-                            />
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* Additional Color 2 */}
-                      <div className="mb-4">
-                        <p className="text-xs text-gray-500 mb-2">Color 2</p>
-                        <div className="grid grid-cols-4 gap-2">
-                          <button
-                            key="none2"
-                            onClick={() => setAdditionalColor2('')}
-                            className={`w-full h-12 rounded border-2 flex items-center justify-center text-xs font-semibold transition ${
-                              additionalColor2 === '' ? 'border-secondary bg-gray-100' : 'border-gray-200'
-                            }`}
-                            title="None"
-                          >
-                            -
-                          </button>
-                          {['#f97316', '#00ff00', '#ffff00', '#ff00ff', '#00ffff', '#ffa500', '#ff69b4', '#87ceeb'].map(color => (
-                            <button
-                              key={color}
-                              onClick={() => setAdditionalColor2(color)}
-                              className={`w-full h-12 rounded border-2 transition ${
-                                additionalColor2 === color ? 'border-secondary' : 'border-transparent'
-                              }`}
-                              style={{ backgroundColor: color }}
-                              title={color}
-                            />
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* Additional Color 3 */}
-                      <div>
-                        <p className="text-xs text-gray-500 mb-2">Color 3</p>
-                        <div className="grid grid-cols-4 gap-2">
-                          <button
-                            key="none3"
-                            onClick={() => setAdditionalColor3('')}
-                            className={`w-full h-12 rounded border-2 flex items-center justify-center text-xs font-semibold transition ${
-                              additionalColor3 === '' ? 'border-secondary bg-gray-100' : 'border-gray-200'
-                            }`}
-                            title="None"
-                          >
-                            -
-                          </button>
-                          {['#f97316', '#00ff00', '#ffff00', '#ff00ff', '#00ffff', '#ffa500', '#ff69b4', '#87ceeb'].map(color => (
-                            <button
-                              key={color}
-                              onClick={() => setAdditionalColor3(color)}
-                              className={`w-full h-12 rounded border-2 transition ${
-                                additionalColor3 === color ? 'border-secondary' : 'border-transparent'
-                              }`}
-                              style={{ backgroundColor: color }}
-                              title={color}
-                            />
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="block text-xs font-semibold text-gray-600 mb-2">QUANTITY</label>
-                      <input
-                        type="number"
-                        value={quantity}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          if (val === '') {
-                            setQuantity('');
-                          } else {
-                            const numVal = parseInt(val);
-                            if (numVal >= 1 && numVal <= 100) {
-                              setQuantity(numVal);
-                            }
-                          }
-                        }}
-                        min="1"
-                        max="100"
-                        placeholder="Enter quantity (1-100)"
-                        className="w-full px-3 py-2 border border-border rounded text-sm focus:ring-2 focus:ring-primary"
-                      />
-                    </div>
-                  </div>
-                )}
-
-                {/* Step 2: Text */}
-                {step === 2 && (
-                  <div className="p-6 space-y-4 border-b border-border">
-                    <div>
-                      <label className="block text-xs font-semibold text-gray-600 mb-2">CUSTOM TEXT</label>
-                      <input
-                        type="text"
-                        value={customText}
-                        onChange={(e) => setCustomText(e.target.value.toUpperCase())}
-                        placeholder="PRINTSYNC"
-                        maxLength="30"
-                        className="w-full px-3 py-2 border border-border rounded text-sm focus:ring-2 focus:ring-primary"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-xs font-semibold text-gray-600 mb-2">JERSEY LAYOUT COMMENTS (OPTIONAL)</label>
-                      <textarea
-                        value={jerseyLayoutComments}
-                        onChange={(e) => setJerseyLayoutComments(e.target.value)}
-                        placeholder="Add any notes about jersey layout, design placement, size preferences, etc."
-                        maxLength="200"
-                        rows="3"
-                        className="w-full px-3 py-2 border border-border rounded text-sm focus:ring-2 focus:ring-primary"
-                      />
-                      <p className="text-xs text-gray-500 mt-1">{jerseyLayoutComments.length}/200 characters</p>
-                    </div>
-
-                    <div className="text-xs text-gray-600 bg-light p-3 rounded">
-                      EST. PRICE: ₱{totalPrice}
-                    </div>
-                  </div>
-                )}
-
-                {/* Step 3: Logo/Image */}
-                {step === 3 && (
-                  <div className="p-6 space-y-4 border-b border-border">
-                    <div>
-                      <label className="block text-xs font-semibold text-gray-600 mb-3">DROP ARTWORK HERE</label>
-                      <div className="border-2 border-dashed border-border rounded-lg p-6 text-center bg-light">
-                        <p className="text-xs text-gray-500 mb-3">PNG, JPG, GIF, SVG (Max 5MB)</p>
-                        <input
-                          type="file"
-                          onChange={handleLogoUpload}
-                          accept="image/*"
-                          className="hidden"
-                          id="logoInput"
-                        />
-                        <label htmlFor="logoInput" className="cursor-pointer">
-                          <div className="text-2xl mb-2">📁</div>
-                          <button
-                            type="button"
-                            onClick={() => document.getElementById('logoInput').click()}
-                            className="w-full px-4 py-2 border border-border rounded text-sm font-medium text-primary hover:bg-light transition"
-                          >
-                            Browse Files
-                          </button>
-                        </label>
-                      </div>
-                      {logoFile && (
-                        <p className="text-xs text-green-600 mt-2">✓ {logoFile.name}</p>
-                      )}
-                    </div>
-
-                    <div className="text-xs text-gray-600 bg-light p-3 rounded">
-                      EST. PRICE: ₱{totalPrice}
-                    </div>
-                  </div>
-                )}
-
-                {/* Step 4: Customer Details */}
-                {step === 4 && (
-                  <div className="p-6 space-y-6 border-b border-border">
-                    {/* Phone Number */}
-                    <div>
-                      <label className="block text-xs font-semibold text-gray-600 mb-2">PHONE NUMBER *</label>
-                      <input
-                        type="tel"
-                        value={phoneNumber}
-                        onChange={(e) => setPhoneNumber(e.target.value)}
-                        placeholder="+63 9xx xxx xxxx"
-                        className="w-full px-3 py-2 border border-border rounded text-sm focus:ring-2 focus:ring-primary"
-                      />
-                    </div>
-
-                    {/* Order Type Selection */}
-                    <div>
-                      <label className="block text-xs font-semibold text-gray-600 mb-3">ORDER TYPE *</label>
-                      <div className="space-y-2">
-                        <label className="flex items-center gap-3 p-3 border border-border rounded cursor-pointer hover:bg-light transition"
-                          style={{ background: orderType === 'pickup' ? '#f5f5f5' : 'white', borderColor: orderType === 'pickup' ? '#000' : '#ddd' }}>
-                          <input
-                            type="radio"
-                            name="orderType"
-                            value="pickup"
-                            checked={orderType === 'pickup'}
-                            onChange={(e) => setOrderType(e.target.value)}
-                            className="w-4 h-4"
-                          />
-                          <div>
-                            <p className="font-medium text-sm">Pick Up</p>
-                            <p className="text-xs text-gray-600">Collect from our store</p>
-                          </div>
-                        </label>
-
-                        <label className="flex items-center gap-3 p-3 border border-border rounded cursor-pointer hover:bg-light transition"
-                          style={{ background: orderType === 'shipping' ? '#f5f5f5' : 'white', borderColor: orderType === 'shipping' ? '#000' : '#ddd' }}>
-                          <input
-                            type="radio"
-                            name="orderType"
-                            value="shipping"
-                            checked={orderType === 'shipping'}
-                            onChange={(e) => setOrderType(e.target.value)}
-                            className="w-4 h-4"
-                          />
-                          <div>
-                            <p className="font-medium text-sm">Ship to Address</p>
-                            <p className="text-xs text-gray-600">Deliver to my location</p>
-                          </div>
-                        </label>
-                      </div>
-                    </div>
-
-                    {/* Shipping Address - Only if shipping */}
-                    {orderType === 'shipping' && (
-                      <div className="space-y-4 pt-4 border-t border-border">
-                        <h4 className="font-semibold text-sm">Shipping Address</h4>
-                        
-                        <div className="grid grid-cols-2 gap-4">
-                          <div>
-                            <label className="block text-xs font-semibold text-gray-600 mb-1">First Name *</label>
-                            <input
-                              type="text"
-                              value={shippingAddress.firstName}
-                              onChange={(e) => setShippingAddress({ ...shippingAddress, firstName: e.target.value })}
-                              placeholder="John"
-                              className="w-full px-3 py-2 border border-border rounded text-sm focus:ring-2 focus:ring-primary"
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-xs font-semibold text-gray-600 mb-1">Last Name *</label>
-                            <input
-                              type="text"
-                              value={shippingAddress.lastName}
-                              onChange={(e) => setShippingAddress({ ...shippingAddress, lastName: e.target.value })}
-                              placeholder="Doe"
-                              className="w-full px-3 py-2 border border-border rounded text-sm focus:ring-2 focus:ring-primary"
-                            />
-                          </div>
-                        </div>
-
-                        <div>
-                          <label className="block text-xs font-semibold text-gray-600 mb-1">Company (Optional)</label>
-                          <input
-                            type="text"
-                            value={shippingAddress.company}
-                            onChange={(e) => setShippingAddress({ ...shippingAddress, company: e.target.value })}
-                            placeholder="Acme Corp"
-                            className="w-full px-3 py-2 border border-border rounded text-sm focus:ring-2 focus:ring-primary"
-                          />
-                        </div>
-
-                        <div>
-                          <label className="block text-xs font-semibold text-gray-600 mb-1">Street Address *</label>
-                          <input
-                            type="text"
-                            value={shippingAddress.street}
-                            onChange={(e) => setShippingAddress({ ...shippingAddress, street: e.target.value })}
-                            placeholder="123 Industrial Way"
-                            className="w-full px-3 py-2 border border-border rounded text-sm focus:ring-2 focus:ring-primary"
-                          />
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-4">
-                          <div>
-                            <label className="block text-xs font-semibold text-gray-600 mb-1">City *</label>
-                            <input
-                              type="text"
-                              value={shippingAddress.city}
-                              onChange={(e) => setShippingAddress({ ...shippingAddress, city: e.target.value })}
-                              placeholder="Metropolis"
-                              className="w-full px-3 py-2 border border-border rounded text-sm focus:ring-2 focus:ring-primary"
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-xs font-semibold text-gray-600 mb-1">State/Province *</label>
-                            <input
-                              type="text"
-                              value={shippingAddress.stateProvince}
-                              onChange={(e) => setShippingAddress({ ...shippingAddress, stateProvince: e.target.value })}
-                              placeholder="NY"
-                              className="w-full px-3 py-2 border border-border rounded text-sm focus:ring-2 focus:ring-primary"
-                            />
-                          </div>
-                        </div>
-
-                        <div>
-                          <label className="block text-xs font-semibold text-gray-600 mb-1">ZIP/Postal Code *</label>
-                          <input
-                            type="text"
-                            value={shippingAddress.zipCode}
-                            onChange={(e) => setShippingAddress({ ...shippingAddress, zipCode: e.target.value })}
-                            placeholder="10001"
-                            className="w-full px-3 py-2 border border-border rounded text-sm focus:ring-2 focus:ring-primary"
-                          />
-                        </div>
-                      </div>
-                    )}
-
-                    <div className="text-xs text-gray-600 bg-light p-3 rounded">
-                      EST. PRICE: ₱{totalPrice}
-                    </div>
-                  </div>
-                )}
-
-                {/* Price Display */}
-                <div className="p-6 border-b border-border">
-                  <div className="text-right">
-                    <p className="text-xs text-gray-600">EST. TOTAL PRICE</p>
-                    <p className="text-2xl font-bold text-primary">₱{totalPrice}</p>
-                    <p className="text-xs text-gray-500 mt-1">{quantity} unit(s) × ₱{selectedProduct?.price}</p>
+                  <button className="w-full py-2 border border-gray-300 text-xs font-bold uppercase tracking-wide text-[#111] hover:bg-gray-50 transition flex items-center justify-center gap-2">
+                    <TextIcon /> Add Text Layer
+                  </button>
+                  <div>
+                    <p className="text-[0.6rem] font-bold text-gray-500 uppercase tracking-wider mb-2">Layout Notes</p>
+                    <textarea value={jerseyLayoutComments} onChange={(e) => setJerseyLayoutComments(e.target.value)}
+                      rows="3" maxLength="200" placeholder="Notes about placement..."
+                      className="w-full px-2 py-1.5 border border-gray-200 text-xs text-[#111] focus:outline-none focus:border-[#111] resize-none"
+                    />
                   </div>
                 </div>
+              )}
 
-                {/* Navigation Buttons */}
-                <div className="p-6 space-y-3">
-                  {step > 1 && (
-                    <button
-                      onClick={() => setStep(step - 1)}
-                      className="w-full px-4 py-2 border border-border rounded font-medium text-primary hover:bg-light transition"
-                    >
-                      ← Back
-                    </button>
-                  )}
-
-                  {step < 4 ? (
-                    <button
-                      onClick={() => {
-                        if (step === 1 && quantity === '') {
-                          toast.error('Please enter a quantity between 1-100');
-                          return;
-                        }
-                        setStep(step + 1);
-                      }}
-                      disabled={!selectedProduct && step === 1}
-                      className="w-full px-4 py-3 bg-primary text-white rounded font-medium hover:bg-gray-800 disabled:opacity-50 transition"
-                    >
-                      Next →
-                    </button>
-                  ) : step === 4 ? (
-                    <button
-                      onClick={() => {
-                        if (!phoneNumber || phoneNumber.trim() === '') {
-                          toast.error('Please enter your phone number');
-                          return;
-                        }
-                        if (orderType === 'shipping') {
-                          const { firstName, lastName, street, city, stateProvince, zipCode } = shippingAddress;
-                          if (!firstName || !lastName || !street || !city || !stateProvince || !zipCode) {
-                            toast.error('Please fill out all required shipping address fields');
-                            return;
-                          }
-                        }
-                        setStep(5);
-                      }}
-                      disabled={!selectedProduct}
-                      className="w-full px-4 py-3 bg-primary text-white rounded font-medium hover:bg-gray-800 disabled:opacity-50 transition"
-                    >
-                      Review Order →
-                    </button>
-                  ) : null}
-                </div>
-              </div>
-            </div>
-
-            {/* Right Side - Preview */}
-            <div className="lg:col-span-2">
-              <div className="bg-white rounded-lg border border-border p-8 sticky top-24">
-                <h3 className="font-semibold text-primary mb-6">DESIGN PREVIEW</h3>
-
-                {/* Jersey Preview */}
-                <div className="flex justify-center items-center min-h-96 bg-light rounded-lg relative">
-                  {selectedProduct ? (
-                    <div className="w-full max-w-sm">
-                      {/* Jersey Container */}
-                      <div
-                        className="relative w-full aspect-video rounded-lg flex flex-col items-center justify-center shadow-lg"
-                        style={{
-                          backgroundColor: primaryColor,
-                          borderColor: accentColor,
-                          borderWidth: '3px',
-                        }}
-                      >
-                        {/* Primary Accent Stripe */}
-                        <div
-                          className="absolute top-0 left-0 right-0 h-2"
-                          style={{ backgroundColor: accentColor }}
-                        />
-
-                        {/* Logo Preview */}
-                        {logoPreview && (
-                          <img
-                            src={logoPreview}
-                            alt="Logo"
-                            className="absolute top-4 w-12 h-12 object-contain opacity-80"
-                          />
-                        )}
-
-                        {/* Main Text */}
-                        <div
-                          className="text-center"
-                          style={{
-                            color: accentColor === '#ffffff' ? '#000000' : accentColor,
-                            fontSize: '32px',
-                            fontWeight: 'bold',
-                            textTransform: 'uppercase',
-                            letterSpacing: '2px',
-                          }}
-                        >
-                          <p>{customText || 'TEAM NAME'}</p>
-                        </div>
-
-                        {/* Bottom Accent with Additional Colors */}
-                        <div className="absolute bottom-0 left-0 right-0 flex h-2">
-                          {additionalColor1 || additionalColor2 || additionalColor3 ? (
-                            <>
-                              {[accentColor, additionalColor1, additionalColor2, additionalColor3]
-                                .filter(c => c)
-                                .map((color, idx) => (
-                                  <div 
-                                    key={idx}
-                                    className="flex-1" 
-                                    style={{ backgroundColor: color }}
-                                  ></div>
-                                ))
-                              }
-                            </>
-                          ) : (
-                            <div className="flex-1" style={{ backgroundColor: accentColor }}></div>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Product Details */}
-                      <div className="mt-8 text-center">
-                        <p className="text-sm text-gray-600">
-                          {selectedProduct?.name}
-                        </p>
-                        <p className="text-xs text-gray-500 mt-1">
-                          {quantity} unit(s) @ ₱{selectedProduct?.price}
-                        </p>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="text-center">
-                      <p className="text-gray-400 text-lg">Select a product to start designing</p>
+              {/* ── UPLOAD TAB ─────────────────────────────────────────── */}
+              {activeTab === 'upload' && (
+                <div className="p-3 space-y-3">
+                  <div className="border-2 border-dashed border-gray-300 p-6 text-center">
+                    <UploadIcon />
+                    <p className="text-[0.6rem] text-gray-400 mt-2 mb-3">PNG, JPG, SVG (Max 5MB)</p>
+                    <p className="text-[0.6rem] font-bold text-gray-500 mb-3">Drop Artwork Here</p>
+                    <input type="file" accept="image/*" id="logoInput" className="hidden" onChange={handleLogoUpload} />
+                    <label htmlFor="logoInput">
+                      <button type="button" onClick={() => document.getElementById('logoInput').click()}
+                        className="w-full py-2 border border-gray-300 text-xs font-bold uppercase tracking-wide text-[#111] hover:bg-gray-50 transition">
+                        Browse Files
+                      </button>
+                    </label>
+                  </div>
+                  {logoFile && (
+                    <div className="flex items-center gap-2 text-xs text-green-600">
+                      <span>✓</span> <span className="truncate">{logoFile.name}</span>
                     </div>
                   )}
+                  {logoPreview && (
+                    <img src={logoPreview} alt="Preview" className="w-full object-contain border border-gray-200 p-2" style={{ maxHeight: 120 }} />
+                  )}
                 </div>
+              )}
 
-                {/* Design Notes */}
-                <div className="mt-8 p-4 bg-light rounded text-xs text-gray-600 space-y-2">
-                  <p>• Design preview is approximate</p>
-                  <p>• Final product may vary based on production requirements</p>
-                  <p>• Admin will review and contact you for confirmation</p>
+              {/* Price + Buttons */}
+              <div className="p-3 border-t border-gray-200">
+                <div className="flex justify-between items-baseline mb-3">
+                  <span className="text-[0.6rem] text-gray-400 uppercase tracking-wider">Est. Price</span>
+                  <span className="text-lg font-black text-[#111]">₱{totalPrice}</span>
                 </div>
+                <button onClick={() => {
+                  if (!selectedProduct) { toast.error('Please select a product'); return; }
+                  if (!phoneNumber.trim()) { toast.error('Please enter your phone number'); return; }
+                  setShowReview(true);
+                }}
+                  className="w-full py-2.5 bg-[#111] text-white text-xs font-bold uppercase tracking-widest hover:bg-gray-800 transition flex items-center justify-center gap-2 mb-2">
+                  <CartIcon /> Add to Cart
+                </button>
+                <button className="w-full py-2 border border-gray-200 text-xs font-bold uppercase tracking-wide text-gray-500 hover:bg-gray-50 transition flex items-center justify-center gap-2">
+                  <SaveIcon /> Save Design
+                </button>
               </div>
             </div>
           </div>
-        )}
+
+          {/* ── RIGHT PANEL — Preview ───────────────────────────────────── */}
+          <div className="flex-1">
+            <div className="bg-white border border-gray-200">
+              <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200">
+                <div className="flex gap-2">
+                  <button onClick={() => setViewSide('front')}
+                    className={`w-8 h-8 flex items-center justify-center border transition ${viewSide === 'front' ? 'bg-[#111] border-[#111] text-white' : 'border-gray-300 text-gray-500 hover:bg-gray-50'}`}>
+                    <RotateLeftIcon />
+                  </button>
+                  <button onClick={() => setViewSide('back')}
+                    className={`w-8 h-8 flex items-center justify-center border transition ${viewSide === 'back' ? 'bg-[#111] border-[#111] text-white' : 'border-gray-300 text-gray-500 hover:bg-gray-50'}`}>
+                    <RotateRightIcon />
+                  </button>
+                </div>
+                <span className="text-[0.6rem] text-gray-400 uppercase tracking-widest">
+                  {viewSide === 'front' ? 'Front View' : 'Back View'}
+                </span>
+                <button className="px-3 py-1.5 border border-gray-300 text-[0.6rem] font-bold uppercase tracking-wide text-gray-500 hover:bg-gray-50 transition">
+                  Print Size
+                </button>
+              </div>
+
+              <div className="flex items-center justify-center bg-gray-50 p-8" style={{ minHeight: 420 }}>
+                {selectedProduct ? (
+                  <div className="w-64">
+                    {viewSide === 'front' ? (
+                      <JerseyFront
+                        primaryColor={primaryColor}
+                        accentColor={accentColor}
+                        customText={customText}
+                        number={jerseyNumber}
+                        logoPreview={logoPreview}
+                      />
+                    ) : (
+                      <JerseyBack
+                        primaryColor={primaryColor}
+                        accentColor={accentColor}
+                        number={jerseyNumber}
+                      />
+                    )}
+                    <p className="text-center text-xs text-gray-400 mt-4 uppercase tracking-wider">{selectedProduct.name}</p>
+                    <p className="text-center text-xs text-gray-400 uppercase tracking-wider">
+                      {quantity} unit(s) @ ₱{selectedProduct.price}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="text-center">
+                    <p className="text-gray-300 text-4xl mb-3">👕</p>
+                    <p className="text-sm text-gray-400">Select a product to start designing</p>
+                  </div>
+                )}
+              </div>
+
+              <div className="px-6 py-3 border-t border-gray-100 flex gap-4">
+                {['Design preview is approximate', 'Final product may vary', 'Admin will review your order'].map((note, i) => (
+                  <p key={i} className="text-[0.6rem] text-gray-400">• {note}</p>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

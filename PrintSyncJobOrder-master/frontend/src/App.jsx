@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { Toaster } from 'react-hot-toast';
 import { useAuthStore } from './store/authStore';
 import Navbar from './components/Navbar';
+import Footer from './components/Footer';               // ← ADD
 import FloatingChatWindow from './components/FloatingChatWindow';
 import ProtectedRoute from './components/ProtectedRoute';
 
@@ -97,7 +98,7 @@ function App() {
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
 
-      {/* Global Floating Chat Window */}
+      <Footer />                                        {/* ← ADD */}
       <FloatingChatWindow />
     </Router>
   );

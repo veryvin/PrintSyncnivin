@@ -68,12 +68,11 @@ const JerseyPlaceholder = ({ color = '#2d2d2d', name = '' }) => (
 
 // ── Mock templates (swap with real API data when ready) ──────────────────────
 const MOCK_TEMPLATES = [
-  { id: 1, name: 'TEAM-CORP-05', category: 'Athletic Sports', likes: 1294, color: '#1a1a1a' },
-  { id: 2, name: 'ATHLETIC-PRO', category: 'Sports', likes: 814, color: '#2c3e50' },
-  { id: 3, name: 'MINIMAL-EVENT', category: 'Events', likes: 393, color: '#006655' },
-  { id: 4, name: 'INDUSTRIAL-X', category: 'Activewear', likes: 62, color: '#2d2d2d' },
+  { id: 1, name: 'TEAM-CORP-05', category: 'Athletic Sports', likes: 1294, color: '#1a1a1a', image: 'jerseyyellow.png' },
+  { id: 2, name: 'ATHLETIC-PRO', category: 'Sports', likes: 814, color: '#2c3e50', image: 'revel.png' },
+  { id: 3, name: 'MINIMAL-EVENT', category: 'Events', likes: 393, color: '#006655', image: 'stem.png' },
+  { id: 4, name: 'INDUSTRIAL-X', category: 'Activewear', likes: 62, color: '#2d2d2d', image: 'polo.png' },
 ];
-
 const ITEMS_PER_PAGE = 4;
 
 export default function StorePage() {
@@ -214,9 +213,9 @@ export default function StorePage() {
                     className="bg-[#1c1c1c] border border-[#2a2a2a] hover:border-gray-500 transition-all duration-200 hover:-translate-y-1"
                   >
                     {/* Image area */}
-                    <div className="aspect-[3/4] bg-[#181818] flex items-center justify-center relative overflow-hidden">
+                    <div className="aspect-[3/4] bg-white flex items-center justify-center relative overflow-hidden">
                       {product.imageBase64 ? (
-                        <img src={product.imageBase64} alt={product.name} className="w-full h-full object-cover" />
+                        <img src={product.imageBase64} alt={product.name} className="w-full h-full object-contain p-4" />
                       ) : (
                         // TODO: swap this with <img src="/path/to/image.jpg" /> when you have product images
                         <div className="w-2/3 opacity-50">
@@ -315,9 +314,15 @@ export default function StorePage() {
                 onClick={() => navigate('/customize')}
               >
                 {/* TODO: Replace with <img src="..." /> when you have template images */}
-                <div className="aspect-[3/4] bg-[#f3f3f3] flex items-center justify-center p-6">
-                  <JerseyPlaceholder color={tpl.color} name={tpl.name} />
-                </div>
+                <div className="aspect-[3/4] bg-white flex items-center justify-center overflow-hidden">
+  {tpl.image ? (
+    <img src={`/images/${tpl.image}`} alt={tpl.name} className="w-full h-full object-contain p-4" />
+  ) : (
+    <div className="w-2/3 p-6">
+      <JerseyPlaceholder color={tpl.color} name={tpl.name} />
+    </div>
+  )}
+</div>
                 <div className="p-3 border-t border-gray-100 flex items-center justify-between gap-2">
                   <div className="min-w-0">
                     <div className="text-[0.7rem] font-extrabold text-[#111] uppercase tracking-wide truncate">{tpl.name}</div>
@@ -339,50 +344,6 @@ export default function StorePage() {
         </div>
       </section>
 
-      {/* ── FOOTER ──────────────────────────────────────────────────────────── */}
-      <footer className="bg-[#111] border-t border-[#1e1e1e]">
-        <div className="max-w-6xl mx-auto px-8 pt-14 pb-8 grid grid-cols-2 md:grid-cols-5 gap-10">
-          {/* Brand col */}
-          <div className="col-span-2 md:col-span-1">
-            <div className="flex items-center gap-2 mb-3">
-              <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center text-[#111] font-black text-sm">P</div>
-              <span className="text-white font-black text-sm uppercase tracking-widest">PrintSync</span>
-            </div>
-            <p className="text-[0.75rem] text-gray-500 leading-relaxed max-w-[180px]">
-              Crafting high-end jerseys that never fade, never peel, and never compromise on quality.
-            </p>
-          </div>
-
-          {/* Link columns */}
-          {[
-            { title: 'Platform', links: [{ label: 'Store', to: '/store' }, { label: 'Order Tracking', to: '/orders' }, { label: 'Customizer', to: '/customize' }] },
-            { title: 'Company', links: [{ label: 'About Us', to: '#' }, { label: 'Templates', to: '#' }, { label: 'Pricing', to: '#' }] },
-            { title: 'Support', links: [{ label: 'FAQ', to: '#' }, { label: 'Contact', to: '#' }, { label: 'Shipping', to: '#' }] },
-            { title: 'Legal', links: [{ label: 'Privacy', to: '#' }, { label: 'Terms', to: '#' }, { label: 'Cookies', to: '#' }] },
-          ].map((col) => (
-            <div key={col.title}>
-              <div className="text-[0.65rem] font-extrabold text-white uppercase tracking-[2px] mb-4">{col.title}</div>
-              {col.links.map((link) => (
-                <Link key={link.label} to={link.to} className="block text-[0.78rem] text-gray-500 hover:text-secondary transition-colors mb-2.5">
-                  {link.label}
-                </Link>
-              ))}
-            </div>
-          ))}
-        </div>
-
-        {/* Bottom bar */}
-        <div className="max-w-6xl mx-auto px-8 py-5 border-t border-[#1e1e1e] flex justify-between items-center flex-wrap gap-4">
-          <span className="text-[0.7rem] text-gray-600">© 2024 PrintSync Inc. All rights reserved.</span>
-          <div className="flex gap-3">
-            {['X', 'GH', 'LI', 'FB', '✉'].map((s) => (
-              <a key={s} href="#" className="w-8 h-8 border border-[#2a2a2a] flex items-center justify-center text-gray-500 text-[0.65rem] hover:border-secondary hover:text-secondary transition-colors">
-                {s}
-              </a>
-            ))}
-          </div>
-        </div>
-      </footer>
     </div>
   );
 }

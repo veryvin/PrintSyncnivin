@@ -1,0 +1,24 @@
+{
+  "name": "printsyncjoborder-master",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+ "scripts": {
+  "dev": "concurrently \"npm --prefix PrintSyncJobOrder-master/frontend run dev\" \"npm --prefix PrintSyncJobOrder-master/backend start\""
+},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/veryvin/PrintSyncnivin.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/veryvin/PrintSyncnivin/issues"
+  },
+  "homepage": "https://github.com/veryvin/PrintSyncnivin#readme",
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
+}
