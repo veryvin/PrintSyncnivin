@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import toast from 'react-hot-toast';
 
-export default function ProductCard({ product, onAddToCart }) {
+export default function ProductCard({ product, onAddToCart, isAdmin }) {
   const [isAdding, setIsAdding] = useState(false);
 
   const handleAddToCart = () => {
@@ -51,13 +51,15 @@ export default function ProductCard({ product, onAddToCart }) {
           <span className="font-semibold text-primary text-sm">
             ₱{parseFloat(product.price).toLocaleString('en-PH', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
           </span>
-          <button
-            onClick={handleAddToCart}
-            disabled={isAdding}
-            className="bg-primary hover:bg-gray-800 disabled:opacity-50 text-white px-3 py-1.5 rounded text-xs font-medium transition"
-          >
-            {isAdding ? 'Adding...' : 'Order'}
-          </button>
+          {!isAdmin && (
+            <button
+              onClick={handleAddToCart}
+              disabled={isAdding}
+              className="bg-primary hover:bg-gray-800 disabled:opacity-50 text-white px-3 py-1.5 rounded text-xs font-medium transition"
+            >
+              {isAdding ? 'Adding...' : 'Order'}
+            </button>
+          )}
         </div>
       </div>
     </div>

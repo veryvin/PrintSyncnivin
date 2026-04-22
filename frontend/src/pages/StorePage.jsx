@@ -7,7 +7,7 @@ import toast from 'react-hot-toast';
 
 export default function StorePage() {
   const navigate = useNavigate();
-  const { user } = useAuthStore();
+  const { user, userRole } = useAuthStore();
   const [products, setProducts] = useState([]);
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -25,7 +25,6 @@ export default function StorePage() {
       setProducts(response.data);
       setFilteredProducts(response.data);
       
-      // Extract unique categories
       const uniqueCategories = [...new Set(response.data.map(p => p.category))];
       setCategories(uniqueCategories);
     } catch (error) {
@@ -56,9 +55,7 @@ export default function StorePage() {
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Navbar will be here */}
-      
-      {/* Hero Section - Minimalist */}
+      {/* Hero Section */}
       <div className="bg-light py-16 md:py-24">
         <div className="max-w-7xl mx-auto px-6">
           <h1 className="text-4xl md:text-5xl font-bold text-primary mb-4">I love Engr. Benjamin</h1>
@@ -112,6 +109,7 @@ export default function StorePage() {
                 key={product.id}
                 product={product}
                 onAddToCart={handleAddToCart}
+                isAdmin={userRole === 'admin'}
               />
             ))}
           </div>
