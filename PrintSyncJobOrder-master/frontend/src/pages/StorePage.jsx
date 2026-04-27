@@ -121,7 +121,7 @@ export default function StorePage() {
       <section className="relative min-h-[520px] bg-[url('/images/bg.jpg')] bg-cover bg-center flex items-center">
         <div className="absolute inset-0 bg-black/50" />
         <div className="relative z-10 max-w-6xl mx-auto px-8 py-24 w-full">
-          <span className="inline-block text-[white] text-[1rem] font-bold tracking-[2.5px] uppercase px-3 py-1 mb-5">
+          <span className="inline-block bg-white text-[#111] text-[0.62rem] font-bold tracking-[2.5px] uppercase px-3 py-1 mb-5">
             Premium Custom Apparel
           </span>
           <h1 className="text-5xl md:text-6xl font-black text-white uppercase leading-none mb-1">
@@ -295,7 +295,7 @@ export default function StorePage() {
           <div className="flex justify-between items-end mb-1">
             <h2 className="text-2xl font-black uppercase tracking-wide text-[#111]">Design Templates</h2>
             <Link
-              to="/customize"
+              to="/templates"
               className="text-[0.72rem] font-bold uppercase tracking-widest text-[#111] border-b-2 border-[#111] pb-0.5 hover:text-secondary hover:border-secondary transition-colors"
             >
               View All Templates
