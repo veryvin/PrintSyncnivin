@@ -1,9 +1,9 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { useAuthStore } from './store/authStore';
 import Navbar from './components/Navbar';
-import Footer from './components/Footer';               // ← ADD
+import Footer from './components/Footer';
 import FloatingChatWindow from './components/FloatingChatWindow';
 import ProtectedRoute from './components/ProtectedRoute';
 
@@ -17,6 +17,11 @@ import AdminDashboard from './pages/AdminDashboard';
 import AdminProducts from './pages/AdminProducts';
 import AdminOrders from './pages/AdminOrders';
 import AdminReports from './pages/AdminReports';
+import AboutPage from './pages/AboutPage';         // ← ADD
+import PricingPage from './pages/PricingPage';     // ← ADD
+import TemplatesPage from './pages/TemplatesPage'; // ← ADD
+import SupportPage from './pages/SupportPage';     // ← ADD
+import LegalPage from './pages/LegalPage';         // ← ADD
 
 import './styles/index.css';
 
@@ -41,6 +46,11 @@ function App() {
         <Route path="/store" element={<StorePage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
+        <Route path="/about" element={<AboutPage />} />         {/* ← ADD */}
+        <Route path="/pricing" element={<PricingPage />} />     {/* ← ADD */}
+        <Route path="/templates" element={<TemplatesPage />} /> {/* ← ADD */}
+        <Route path="/support" element={<SupportPage />} />     {/* ← ADD */}
+        <Route path="/legal" element={<LegalPage />} />         {/* ← ADD */}
 
         {/* Customer Routes */}
         <Route
@@ -98,7 +108,7 @@ function App() {
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
 
-      <Footer />                                        {/* ← ADD */}
+      <Footer />
       <FloatingChatWindow />
     </Router>
   );
