@@ -54,7 +54,6 @@ const ArrowRight = () => (
 );
 
 // ── Jersey SVG placeholder ────────────────────────────────────────────────────
-// TODO: Replace with <img> when you have real product/template images
 const JerseyPlaceholder = ({ color = '#2d2d2d', name = '' }) => (
   <svg viewBox="0 0 200 220" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
     <path
@@ -66,7 +65,7 @@ const JerseyPlaceholder = ({ color = '#2d2d2d', name = '' }) => (
   </svg>
 );
 
-// ── Mock templates (swap with real API data when ready) ──────────────────────
+// ── Mock templates ──────────────────────────────────────────────────────────
 const MOCK_TEMPLATES = [
   { id: 1, name: 'TEAM-CORP-05', category: 'Athletic Sports', likes: 1294, color: '#1a1a1a', image: 'jerseyyellow.png' },
   { id: 2, name: 'ATHLETIC-PRO', category: 'Sports', likes: 814, color: '#2c3e50', image: 'revel.png' },
@@ -77,10 +76,12 @@ const ITEMS_PER_PAGE = 4;
 
 export default function StorePage() {
   const navigate = useNavigate();
-  const { user } = useAuthStore();
+  const { user, userRole } = useAuthStore();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [carouselIndex, setCarouselIndex] = useState(0);
+
+  const isAdmin = userRole === 'admin';
 
   useEffect(() => { fetchProducts(); }, []);
 
@@ -116,16 +117,9 @@ export default function StorePage() {
   return (
     <div className="min-h-screen bg-white overflow-x-hidden">
 
-      {/* ── HERO ────────────────────────────────────────────────────────────
-           TODO: To add your background image replace the bg-[#111] class with:
-           className="relative min-h-[520px] bg-[url('/your-hero-image.jpg')] bg-cover bg-center flex items-center"
-           Then adjust or remove the overlay div opacity below as needed.
-      ──────────────────────────────────────────────────────────────────── */}
-      <section className="relative min-h-[520px] bg-[url('/images/bg.jpg')] bg-cover bg-center flex items-center"
->
-        {/* Overlay — lighten/darken once you add a background image */}
+      {/* ── HERO ── */}
+      <section className="relative min-h-[520px] bg-[url('/images/bg.jpg')] bg-cover bg-center flex items-center">
         <div className="absolute inset-0 bg-black/50" />
-
         <div className="relative z-10 max-w-6xl mx-auto px-8 py-24 w-full">
           <span className="inline-block bg-white text-[#111] text-[0.62rem] font-bold tracking-[2.5px] uppercase px-3 py-1 mb-5">
             Premium Custom Apparel
@@ -156,7 +150,7 @@ export default function StorePage() {
         </div>
       </section>
 
-      {/* ── FEATURES STRIP ──────────────────────────────────────────────────── */}
+      {/* ── FEATURES STRIP ── */}
       <section className="bg-white border-t-[3px] border-[#111] border-b border-gray-200">
         <div className="max-w-6xl mx-auto px-8 py-14 grid grid-cols-1 md:grid-cols-3 gap-10">
           {[
@@ -177,7 +171,7 @@ export default function StorePage() {
         </div>
       </section>
 
-      {/* ── FEATURED PRODUCTS ───────────────────────────────────────────────── */}
+      {/* ── FEATURED PRODUCTS ── */}
       <section className="bg-[#111]" id="featured">
         <div className="max-w-6xl mx-auto px-8 py-16">
           <div className="flex justify-between items-end mb-1">
@@ -217,7 +211,6 @@ export default function StorePage() {
                       {product.imageBase64 ? (
                         <img src={product.imageBase64} alt={product.name} className="w-full h-full object-contain p-4" />
                       ) : (
-                        // TODO: swap this with <img src="/path/to/image.jpg" /> when you have product images
                         <div className="w-2/3 opacity-50">
                           <JerseyPlaceholder color="#333" name={product.name} />
                         </div>
@@ -240,26 +233,30 @@ export default function StorePage() {
                       <div className="text-[0.88rem] font-bold text-gray-300 mb-4">
                         {formatPrice(product.price)}
                       </div>
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => handleCustomize(product)}
-                          className="flex-1 border border-white/25 text-white text-[0.68rem] font-bold tracking-widest uppercase py-2 hover:bg-white hover:text-[#111] transition-colors duration-200"
-                        >
-                          Customize
-                        </button>
-                        <button
-                          onClick={() => handleCustomize(product)}
-                          className="w-9 border border-white/25 flex items-center justify-center text-white hover:bg-secondary hover:border-secondary transition-colors duration-200"
-                        >
-                          <CartIcon />
-                        </button>
-                      </div>
+
+                      {/* ✅ Hidden for admin, visible for customers */}
+                      {!isAdmin && (
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => handleCustomize(product)}
+                            className="flex-1 border border-white/25 text-white text-[0.68rem] font-bold tracking-widest uppercase py-2 hover:bg-white hover:text-[#111] transition-colors duration-200"
+                          >
+                            Customize
+                          </button>
+                          <button
+                            onClick={() => handleCustomize(product)}
+                            className="w-9 border border-white/25 flex items-center justify-center text-white hover:bg-secondary hover:border-secondary transition-colors duration-200"
+                          >
+                            <CartIcon />
+                          </button>
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))}
               </div>
 
-              {/* Pagination dots + arrows */}
+              {/* Pagination */}
               <div className="flex items-center justify-center gap-3 mt-8">
                 <button
                   onClick={() => setCarouselIndex(Math.max(0, carouselIndex - ITEMS_PER_PAGE))}
@@ -292,7 +289,7 @@ export default function StorePage() {
         </div>
       </section>
 
-      {/* ── DESIGN TEMPLATES ────────────────────────────────────────────────── */}
+      {/* ── DESIGN TEMPLATES ── */}
       <section className="bg-white" id="templates">
         <div className="max-w-6xl mx-auto px-8 py-16">
           <div className="flex justify-between items-end mb-1">
@@ -313,16 +310,15 @@ export default function StorePage() {
                 className="border border-gray-200 hover:border-[#111] transition-colors duration-200 cursor-pointer"
                 onClick={() => navigate('/customize')}
               >
-                {/* TODO: Replace with <img src="..." /> when you have template images */}
                 <div className="aspect-[3/4] bg-white flex items-center justify-center overflow-hidden">
-  {tpl.image ? (
-    <img src={`/images/${tpl.image}`} alt={tpl.name} className="w-full h-full object-contain p-4" />
-  ) : (
-    <div className="w-2/3 p-6">
-      <JerseyPlaceholder color={tpl.color} name={tpl.name} />
-    </div>
-  )}
-</div>
+                  {tpl.image ? (
+                    <img src={`/images/${tpl.image}`} alt={tpl.name} className="w-full h-full object-contain p-4" />
+                  ) : (
+                    <div className="w-2/3 p-6">
+                      <JerseyPlaceholder color={tpl.color} name={tpl.name} />
+                    </div>
+                  )}
+                </div>
                 <div className="p-3 border-t border-gray-100 flex items-center justify-between gap-2">
                   <div className="min-w-0">
                     <div className="text-[0.7rem] font-extrabold text-[#111] uppercase tracking-wide truncate">{tpl.name}</div>
