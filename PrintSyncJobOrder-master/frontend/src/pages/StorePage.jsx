@@ -396,6 +396,19 @@ export default function StorePage() {
             ))}
           </div>
 
+          {/* CTA */}
+          <div className="mt-10 flex flex-wrap gap-3 items-center">
+            <Link
+              to="/customize"
+              className="inline-flex items-center gap-2 bg-[#111] text-white font-bold text-[0.72rem] tracking-widest uppercase px-6 py-3 hover:bg-secondary transition-colors duration-200"
+            >
+              Start Your Order <ArrowRight />
+            </Link>
+            <p className="text-[0.7rem] text-gray-400">
+              Not sure what you need? <Link to="/support" className="text-[#111] font-bold underline underline-offset-2 hover:text-secondary transition-colors">Contact us</Link> and we'll help.
+            </p>
+          </div>
+
         </div>
       </section>
 
@@ -449,18 +462,7 @@ export default function StorePage() {
           </div>
         </div>
       </section>
-          {/* CTA */}
-          <div className="mt-10 flex flex-wrap gap-3 items-center">
-            <Link
-              to="/customize"
-              className="inline-flex items-center gap-2 bg-[#111] text-white font-bold text-[0.72rem] tracking-widest uppercase px-6 py-3 hover:bg-secondary transition-colors duration-200"
-            >
-              Start Your Order <ArrowRight />
-            </Link>
-            <p className="text-[0.7rem] text-gray-400">
-              Not sure what you need? <Link to="/support" className="text-[#111] font-bold underline underline-offset-2 hover:text-secondary transition-colors">Contact us</Link> and we'll help.
-            </p>
-          </div>
+
     </div>
   );
 }
