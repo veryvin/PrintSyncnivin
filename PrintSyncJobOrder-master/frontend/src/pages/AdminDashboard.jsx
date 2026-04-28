@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import apiClient from '../utils/apiClient';
 import toast from 'react-hot-toast';
+import { useNavigate } from 'react-router-dom';
 
 export default function AdminDashboard() {
   const [stats, setStats] = useState({
@@ -11,7 +12,7 @@ export default function AdminDashboard() {
   });
   const [recentOrders, setRecentOrders] = useState([]);
   const [loading, setLoading] = useState(true);
-
+  const navigate = useNavigate();
   useEffect(() => {
     fetchDashboardData();
   }, []);
@@ -38,21 +39,6 @@ export default function AdminDashboard() {
     hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false,
   });
   const lastSyncDate = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-
-  const inventoryItems = [
-    { sku: 'MAT-001', name: 'Premium Cotton Blend (Black)', stock: 1250, status: 'OPTIMAL' },
-    { sku: 'MAT-002', name: 'Premium Cotton Blend (White)', stock: 840, status: 'OPTIMAL' },
-    { sku: 'MAT-003', name: 'Performance Mesh (Navy)', stock: 120, status: 'LOW STOCK' },
-    { sku: 'INK-001', name: 'Plastisol Ink (White)', stock: 45, status: 'LOW STOCK' },
-    { sku: 'INK-002', name: 'Plastisol Ink (Black)', stock: 5, status: 'CRITICAL' },
-  ];
-
-  const statusColor = (s) => {
-    if (s === 'OPTIMAL') return 'text-green-600 bg-green-100';
-    if (s === 'LOW STOCK') return 'text-yellow-700 bg-yellow-100';
-    if (s === 'CRITICAL') return 'text-red-600 bg-red-100';
-    return 'text-gray-600 bg-gray-100';
-  };
 
   const orderStatusColor = (s) => {
     if (!s) return 'bg-gray-100 text-gray-600';
@@ -96,7 +82,7 @@ export default function AdminDashboard() {
         ) : (
           <>
             {/* Stat Cards */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="bg-white rounded-lg p-5 shadow-sm border border-gray-100">
                 <div className="flex items-center justify-between mb-4">
                   <p className="text-xs text-gray-500 uppercase tracking-wider font-medium">Total Revenue</p>
@@ -122,81 +108,47 @@ export default function AdminDashboard() {
                   48 <span className="text-sm font-normal text-gray-400">HRS</span>
                 </p>
               </div>
-
-              <div className="bg-white rounded-lg p-5 shadow-sm border border-red-200">
-                <div className="flex items-center justify-between mb-4">
-                  <p className="text-xs text-gray-500 uppercase tracking-wider font-medium">Inventory Issues</p>
-                  <span className="text-xs bg-red-100 text-red-600 px-2 py-0.5 rounded font-semibold">2 ALERTS</span>
-                </div>
-                <p className="text-2xl font-bold text-red-500">Low Stock</p>
-              </div>
             </div>
 
-            {/* Bottom Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-
-              {/* Active Job Queue */}
-              <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
-                <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-                  <h2 className="font-semibold text-gray-900 text-sm">Active Job Queue</h2>
-                  <button className="text-xs text-blue-600 hover:underline font-medium">View All</button>
-                </div>
-                <div className="divide-y divide-gray-50">
-                  {recentOrders.length === 0 ? (
-                    <p className="text-center text-gray-400 text-sm py-10">No active jobs</p>
-                  ) : (
-                    recentOrders.map((order, i) => (
-                      <div key={order.id} className="flex items-center gap-3 px-5 py-3.5">
-                        <span className="text-xs text-gray-400 w-6 shrink-0">{i + 1} —</span>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-gray-800 truncate">
-                            {order.customerName ? `${order.customerName}'s Order` : 'Bulk Order'}
-                          </p>
-                          <p className="text-xs text-gray-400 truncate">
-                            {order.id.substring(0, 8)} · ₱{order.totalPrice}
-                          </p>
-                        </div>
-                        <div className="w-24 bg-gray-200 rounded-full h-1.5 shrink-0">
-                          <div
-                            className="bg-gray-700 h-1.5 rounded-full transition-all"
-                            style={{ width: progressWidth(order.status) }}
-                          />
-                        </div>
-                        <span className={`text-xs px-2 py-0.5 rounded font-semibold uppercase shrink-0 ${orderStatusColor(order.status)}`}>
-                          {order.status}
-                        </span>
-                      </div>
-                    ))
-                  )}
-                </div>
+            {/* Active Job Queue */}
+            <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
+              <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+                <h2 className="font-semibold text-gray-900 text-sm">Active Job Queue</h2>
+                <button
+                  onClick={() => navigate('/admin/orders')}
+                  className="text-xs text-blue-600 hover:underline font-medium"
+                >
+                  View All
+                </button>
               </div>
-
-              {/* Inventory Status */}
-              <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
-                <div className="bg-gray-900 px-5 py-3">
-                  <div className="grid grid-cols-4 text-xs text-gray-400 uppercase tracking-wider font-semibold">
-                    <span>SKU</span>
-                    <span>Material Name</span>
-                    <span className="text-right">Stock Level</span>
-                    <span className="text-right">Status</span>
-                  </div>
-                </div>
-                <div className="divide-y divide-gray-100">
-                  {inventoryItems.map((item) => (
-                    <div key={item.sku} className="grid grid-cols-4 items-center px-5 py-3 text-sm">
-                      <span className="text-xs text-gray-400 font-mono">{item.sku}</span>
-                      <span className="text-gray-700 text-xs pr-2">{item.name}</span>
-                      <span className="text-right text-gray-900 font-semibold">{item.stock}</span>
-                      <span className="text-right">
-                        <span className={`text-xs px-2 py-0.5 rounded font-semibold uppercase ${statusColor(item.status)}`}>
-                          {item.status}
-                        </span>
+              <div className="divide-y divide-gray-50">
+                {recentOrders.length === 0 ? (
+                  <p className="text-center text-gray-400 text-sm py-10">No active jobs</p>
+                ) : (
+                  recentOrders.map((order, i) => (
+                    <div key={order.id} className="flex items-center gap-3 px-5 py-3.5">
+                      <span className="text-xs text-gray-400 w-6 shrink-0">{i + 1} —</span>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-gray-800 truncate">
+                          {order.customerName ? `${order.customerName}'s Order` : 'Bulk Order'}
+                        </p>
+                        <p className="text-xs text-gray-400 truncate">
+                          {order.id.substring(0, 8)} · ₱{order.totalPrice}
+                        </p>
+                      </div>
+                      <div className="w-24 bg-gray-200 rounded-full h-1.5 shrink-0">
+                        <div
+                          className="bg-gray-700 h-1.5 rounded-full transition-all"
+                          style={{ width: progressWidth(order.status) }}
+                        />
+                      </div>
+                      <span className={`text-xs px-2 py-0.5 rounded font-semibold uppercase shrink-0 ${orderStatusColor(order.status)}`}>
+                        {order.status}
                       </span>
                     </div>
-                  ))}
-                </div>
+                  ))
+                )}
               </div>
-
             </div>
           </>
         )}

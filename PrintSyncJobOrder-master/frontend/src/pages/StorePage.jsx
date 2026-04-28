@@ -52,6 +52,11 @@ const ArrowRight = () => (
     <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14M12 5l7 7-7 7" />
   </svg>
 );
+const PlusIcon = () => (
+  <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" d="M12 5v14M5 12h14" />
+  </svg>
+);
 
 // ── Jersey SVG placeholder ────────────────────────────────────────────────────
 const JerseyPlaceholder = ({ color = '#2d2d2d', name = '' }) => (
@@ -73,6 +78,61 @@ const MOCK_TEMPLATES = [
   { id: 4, name: 'INDUSTRIAL-X', category: 'Activewear', likes: 62, color: '#2d2d2d', image: 'polo.png' },
 ];
 const ITEMS_PER_PAGE = 4;
+
+// ── Product Categories Data ──────────────────────────────────────────────────
+const PRODUCT_CATEGORIES = [
+  {
+    title: 'Custom Sportswear',
+    accent: '#e8500a',
+    description: 'Performance-grade uniforms built for competition.',
+    items: [
+      'Basketball Jersey Regular Cut (Round Neck / V-Neck)',
+      'Basketball Jersey Shorts',
+      'Basketball Jersey Set Regular Cut',
+      'Basketball Jersey Nike Elite Cut (Round Neck / V-Neck)',
+      'Basketball Jersey Nike Elite Cut Shorts',
+      'Basketball Jersey Set Nike Elite Cut',
+      'Volleyball Jersey Sleeveless / T-Shirt (Round Neck / V-Neck)',
+      'Volleyball Shorts',
+      'Volleyball Jersey Set Sleeveless / T-Shirt',
+      'Jersey Regular Cut + NBA Cut',
+      'Football Jersey (Dual Fabric)',
+      'Football Jersey (Single Fabric)',
+      'Hockey Jersey (Single Mesh Fabric)',
+      'Hockey Jersey (Dual Fabric Cut & Sew / 2 Fabric)',
+      'Reversible Jersey (Lightweight)',
+      'Reversible Jersey (Lightweight Mesh)',
+    ],
+  },
+  {
+    title: 'Custom Apparel',
+    accent: '#e8500a',
+    description: 'Everyday wear with a premium custom finish.',
+    items: [
+      'T-Shirt',
+      'Longsleeve',
+      'Longsleeve Hoodie',
+      'Poloshirt Knitted Collar',
+      'Poloshirt Neoprane Collar',
+      'Chinese Collar',
+      'Chinese Collar Longsleeve',
+    ],
+  },
+  {
+    title: 'Excluded / Add-Ons',
+    accent: '#666',
+    description: 'Optional upgrades and specialty items billed separately.',
+    items: [
+      '4XL UP / Custom Big Size',
+      'Short Pocket',
+      'Knitted Collar / Ribbings',
+      'Full Zip Hoodie',
+      'Specialized Fabric (non-standard)',
+      'Aircool / Mesh',
+      'Special Collar (Not Round, Not V-Neck)',
+    ],
+  },
+];
 
 export default function StorePage() {
   const navigate = useNavigate();
@@ -206,7 +266,6 @@ export default function StorePage() {
                     key={product.id}
                     className="bg-[#1c1c1c] border border-[#2a2a2a] hover:border-gray-500 transition-all duration-200 hover:-translate-y-1"
                   >
-                    {/* Image area */}
                     <div className="aspect-[3/4] bg-white flex items-center justify-center relative overflow-hidden">
                       {product.imageBase64 ? (
                         <img src={product.imageBase64} alt={product.name} className="w-full h-full object-contain p-4" />
@@ -221,8 +280,6 @@ export default function StorePage() {
                         </span>
                       )}
                     </div>
-
-                    {/* Card body */}
                     <div className="p-4">
                       <div className="text-[0.62rem] text-gray-500 uppercase tracking-widest mb-0.5">
                         {product.category || 'Apparel'}
@@ -233,8 +290,6 @@ export default function StorePage() {
                       <div className="text-[0.88rem] font-bold text-gray-300 mb-4">
                         {formatPrice(product.price)}
                       </div>
-
-                      {/* ✅ Hidden for admin, visible for customers */}
                       {!isAdmin && (
                         <div className="flex gap-2">
                           <button
@@ -256,7 +311,6 @@ export default function StorePage() {
                 ))}
               </div>
 
-              {/* Pagination */}
               <div className="flex items-center justify-center gap-3 mt-8">
                 <button
                   onClick={() => setCarouselIndex(Math.max(0, carouselIndex - ITEMS_PER_PAGE))}
@@ -289,25 +343,81 @@ export default function StorePage() {
         </div>
       </section>
 
+      {/* ── PRODUCT CATEGORIES ── */}
+      <section className="bg-white border-t-[3px] border-[#111]" id="categories">
+        <div className="max-w-6xl mx-auto px-8 py-16">
+
+          {/* Section Header */}
+          <div className="mb-12">
+            <h2 className="text-2xl font-black uppercase tracking-wide text-[#111] mb-1">What We Offer</h2>
+            <p className="text-[0.65rem] text-gray-400 uppercase tracking-widest">Full range of custom garments & add-ons</p>
+          </div>
+
+          {/* Stacked Category Blocks */}
+          <div className="space-y-0 divide-y divide-gray-200 border-y border-gray-200">
+            {PRODUCT_CATEGORIES.map((cat, idx) => (
+              <div key={idx} className="py-10">
+
+                {/* Category Header Row */}
+                <div className="flex items-start justify-between gap-4 mb-6">
+                  <div>
+                    <div className="flex items-center gap-3 mb-1">
+                      <span
+                        className="inline-block w-2.5 h-2.5 rounded-full"
+                        style={{ backgroundColor: cat.accent }}
+                      />
+                      <h3 className="text-[1rem] font-black uppercase tracking-wider text-[#111]">
+                        {cat.title}
+                      </h3>
+                    </div>
+                    <p className="text-[0.72rem] text-gray-400 ml-[22px]">{cat.description}</p>
+                  </div>
+                  <span className="shrink-0 text-[0.65rem] font-bold uppercase tracking-widest text-gray-400 border border-gray-200 px-2.5 py-1 mt-0.5">
+                    {cat.items.length} items
+                  </span>
+                </div>
+
+                {/* Items Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-0">
+                  {cat.items.map((item, i) => (
+                    <div
+                      key={i}
+                      className="flex items-center gap-3 py-2.5 border-b border-dashed border-gray-100 last:border-0"
+                    >
+                      <span className="shrink-0 text-gray-300">
+                        <PlusIcon />
+                      </span>
+                      <span className="text-[0.8rem] text-gray-700 leading-snug">{item}</span>
+                    </div>
+                  ))}
+                </div>
+
+              </div>
+            ))}
+          </div>
+
+        </div>
+      </section>
+
       {/* ── DESIGN TEMPLATES ── */}
-      <section className="bg-white" id="templates">
+      <section className="bg-[#111]" id="Templates">
         <div className="max-w-6xl mx-auto px-8 py-16">
           <div className="flex justify-between items-end mb-1">
-            <h2 className="text-2xl font-black uppercase tracking-wide text-[#111]">Design Templates</h2>
+            <h2 className="text-2xl font-black uppercase tracking-wide text-white">Design Template</h2>
             <Link
               to="/templates"
-              className="text-[0.72rem] font-bold uppercase tracking-widest text-[#111] border-b-2 border-[#111] pb-0.5 hover:text-secondary hover:border-secondary transition-colors"
+              className="text-[0.72rem] font-bold uppercase tracking-widest text-secondary border-b border-secondary pb-0.5 hover:opacity-70 transition-opacity"
             >
               View All Templates
             </Link>
           </div>
-          <p className="text-[0.65rem] text-gray-400 uppercase tracking-widest mb-8">Start with a pre-configured base</p>
+          <p className="text-[0.65rem] text-gray-500 uppercase tracking-widest mb-8">Start with a pre-configured base</p>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {MOCK_TEMPLATES.map((tpl) => (
               <div
                 key={tpl.id}
-                className="border border-gray-200 hover:border-[#111] transition-colors duration-200 cursor-pointer"
+                className="border border-white -200 hover:border-[#111] transition-colors duration-200 cursor-pointer"
                 onClick={() => navigate('/customize')}
               >
                 <div className="aspect-[3/4] bg-white flex items-center justify-center overflow-hidden">
@@ -339,7 +449,18 @@ export default function StorePage() {
           </div>
         </div>
       </section>
-
+          {/* CTA */}
+          <div className="mt-10 flex flex-wrap gap-3 items-center">
+            <Link
+              to="/customize"
+              className="inline-flex items-center gap-2 bg-[#111] text-white font-bold text-[0.72rem] tracking-widest uppercase px-6 py-3 hover:bg-secondary transition-colors duration-200"
+            >
+              Start Your Order <ArrowRight />
+            </Link>
+            <p className="text-[0.7rem] text-gray-400">
+              Not sure what you need? <Link to="/support" className="text-[#111] font-bold underline underline-offset-2 hover:text-secondary transition-colors">Contact us</Link> and we'll help.
+            </p>
+          </div>
     </div>
   );
 }
