@@ -6,6 +6,84 @@ import toast from 'react-hot-toast';
 
 const DEPOSIT_AMOUNT = 500;
 
+// ── Product Types ──────────────────────────────────────────────────────────────
+const PRODUCT_CATEGORIES = [
+  {
+    category: 'Custom Sportswear',
+    note: '(Round Neck / V-Neck)',
+    items: [
+      'Basketball Jersey Regular Cut',
+      'Basketball Jersey Shorts',
+      'Basketball Jersey Set Regular Cut',
+      'Basketball Jersey Nike Elite Cut',
+      'Basketball Jersey Nike Elite Cut Shorts',
+      'Basketball Jersey Set Nike Elite Cut',
+      'Volleyball Jersey Sleeveless/T-Shirt (Round Neck/Vneck)',
+      'Volleyball Shorts',
+      'Volleyball Jersey Set Sleeveless/T-Shirt',
+      'Jersey Regular Cut + NBA Cut',
+      'Football Jersey (Dual Fabric)',
+      'Football Jersey (Single Fabric)',
+      'Hockey Jersey (Single Mesh Fabric)',
+      'Hockey Jersey (Dual Fabric Cut & Sew/2 Fabric)',
+      'Reversible Jersey (Lightweight)',
+      'Reversible Jersey (Lightweight Mesh)',
+    ],
+  },
+  {
+    category: 'Custom Apparel',
+    items: [
+      'T-Shirt',
+      'Longsleeve',
+      'Longsleeve Hoodie',
+      'Poloshirt Knitted Collar',
+      'Poloshirt Neoprane Collar',
+      'Chinese Collar',
+      'Chinese Collar Longsleeve',
+    ],
+  },
+];
+
+// Flat list for searching
+const ALL_PRODUCT_TYPES = PRODUCT_CATEGORIES.flatMap(cat =>
+  cat.items.map(item => ({ label: item, category: cat.category }))
+);
+
+// ── Fabric Types ───────────────────────────────────────────────────────────────
+const FABRIC_TYPES = [
+  { id: 'AIRCOOL', name: 'Aircool', desc: 'Lightweight airflow mesh' },
+  { id: 'DURAMAX', name: 'Duramax', desc: 'Heavy-duty durability fabric' },
+  { id: 'ECOFAB', name: 'Ecofab', desc: 'Eco-friendly performance fabric' },
+  { id: 'ECOSOFT', name: 'Ecosoft', desc: 'Soft eco-conscious material' },
+  { id: 'FULLMAX', name: 'Fullmax', desc: 'Full-coverage max protection' },
+  { id: 'HEXA TEX', name: 'Hexa Tex', desc: 'Hexagonal texture weave' },
+  { id: 'LYTEX', name: 'Lytex', desc: 'Ultra-light performance tex' },
+  { id: 'MICRO-COOL', name: 'Micro-Cool', desc: 'Cooling micro-fiber blend' },
+  { id: 'MICRO DEX', name: 'Micro Dex', desc: 'Flexible micro-dex weave' },
+  { id: 'MICRO DOT', name: 'Micro Dot', desc: 'Dotted micro-texture finish' },
+  { id: 'MICRO KNIT', name: 'Micro Knit', desc: 'Knitted micro-fiber fabric' },
+  { id: 'MICRO SHINY', name: 'Micro Shiny', desc: 'Shiny micro-fiber sheen' },
+  { id: 'MICROTECH COMPRESSION', name: 'Microtech Compression', desc: 'Compression tech fabric' },
+  { id: 'POLYDEX', name: 'Polydex', desc: 'Polyester dex performance' },
+  { id: 'POLTYDEX AG', name: 'Poltydex AG', desc: 'Anti-germ poly fabric' },
+  { id: 'POLY LITE', name: 'Poly Lite', desc: 'Lightweight polyester blend' },
+  { id: 'POLYMAX', name: 'Polymax', desc: 'Maximum poly performance' },
+  { id: 'POLYTECH', name: 'Polytech', desc: 'Technical polyester weave' },
+  { id: 'POLYSTRIPES', name: 'Polystripes', desc: 'Striped poly pattern fabric' },
+  { id: 'RIBSTOPS', name: 'Ribstops', desc: 'Ribbed ripstop material' },
+  { id: 'POLIFIT CROSS', name: 'Polifit Cross', desc: 'Cross-fit poly flex' },
+  { id: 'SEMI COOL', name: 'Semi Cool', desc: 'Semi-cooling mid-weight' },
+  { id: 'SEMI STEP', name: 'Semi Step', desc: 'Step-weave semi fabric' },
+  { id: 'SOLAR M', name: 'Solar M', desc: 'Solar-reflective material' },
+  { id: 'SPANDEX', name: 'Spandex', desc: 'High-stretch spandex blend' },
+  { id: 'SPORTS MAX', name: 'Sports Max', desc: 'Max-performance sports fabric' },
+  { id: 'SPUNDY', name: 'Spundy', desc: 'Spun-yarn durable weave' },
+  { id: 'SQUARE KNIT', name: 'Square Knit', desc: 'Square-pattern knit texture' },
+  { id: 'SUBLIDEX', name: 'Sublidex', desc: 'Sublimation-ready dex fabric' },
+  { id: 'SUBLI DOT', name: 'Subli Dot', desc: 'Dot-pattern sublimation fabric' },
+  { id: 'TRIFIT COTTON', name: 'Trifit Cotton', desc: 'Triple-blend cotton comfort' },
+];
+
 // ── Icons ─────────────────────────────────────────────────────────────────────
 const UploadIcon = () => (
   <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
@@ -22,171 +100,218 @@ const CheckIcon = () => (
     <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
   </svg>
 );
+const FabricIcon = () => (
+  <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2v-4M9 21H5a2 2 0 01-2-2v-4m0 0h18" />
+  </svg>
+);
+const ChevronIcon = ({ open }) => (
+  <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"
+    style={{ transform: open ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+  </svg>
+);
+const ShirtIcon = () => (
+  <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" d="M20.38 3.46L16 2a4 4 0 01-8 0L3.62 3.46a2 2 0 00-1.34 2.23l.58 3.57a1 1 0 00.99.84H6v10a2 2 0 002 2h8a2 2 0 002-2V10h2.15a1 1 0 00.99-.84l.58-3.57a2 2 0 00-1.34-2.23z" />
+  </svg>
+);
 
-// ── Realistic Basketball Jersey SVG (Front) ───────────────────────────────────
-const JerseyFront = ({ primary, accent, text, number, logo }) => (
-  <svg viewBox="0 0 400 480" xmlns="http://www.w3.org/2000/svg" className="w-full h-full drop-shadow-2xl">
-    <defs>
-      <linearGradient id="bodyShade" x1="0%" y1="0%" x2="100%" y2="0%">
-        <stop offset="0%" stopColor="#000" stopOpacity="0.08" />
-        <stop offset="50%" stopColor="#000" stopOpacity="0" />
-        <stop offset="100%" stopColor="#000" stopOpacity="0.08" />
-      </linearGradient>
-      <linearGradient id="sleeveShadeL" x1="0%" y1="0%" x2="100%" y2="0%">
-        <stop offset="0%" stopColor="#000" stopOpacity="0.15" />
-        <stop offset="100%" stopColor="#000" stopOpacity="0" />
-      </linearGradient>
-      <linearGradient id="sleeveShadeR" x1="0%" y1="0%" x2="100%" y2="0%">
-        <stop offset="0%" stopColor="#000" stopOpacity="0" />
-        <stop offset="100%" stopColor="#000" stopOpacity="0.15" />
-      </linearGradient>
-      <filter id="shadow" x="-5%" y="-5%" width="110%" height="115%">
-        <feDropShadow dx="0" dy="4" stdDeviation="6" floodColor="#000" floodOpacity="0.18" />
-      </filter>
-    </defs>
+// ── Searchable Dropdown (generic) ─────────────────────────────────────────────
+const SearchableDropdown = ({ label, placeholder, value, onChange, options, renderOption, renderSelected, required }) => {
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState('');
+  const ref = useRef(null);
+  const inputRef = useRef(null);
 
-    <g filter="url(#shadow)">
-      {/* ── Body ── */}
-      <path
-        d="M 105 115 L 105 420 Q 105 435 120 435 L 280 435 Q 295 435 295 420 L 295 115 Z"
-        fill={primary} stroke={accent} strokeWidth="2.5"
-      />
+  useEffect(() => {
+    const handler = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
 
-      {/* ── Left sleeve ── */}
-      <path
-        d="M 105 115 L 55 80 Q 40 72 35 88 L 25 145 Q 22 160 38 163 L 105 170 Z"
-        fill={primary} stroke={accent} strokeWidth="2.5"
-      />
+  useEffect(() => {
+    if (open && inputRef.current) inputRef.current.focus();
+  }, [open]);
 
-      {/* ── Right sleeve ── */}
-      <path
-        d="M 295 115 L 345 80 Q 360 72 365 88 L 375 145 Q 378 160 362 163 L 295 170 Z"
-        fill={primary} stroke={accent} strokeWidth="2.5"
-      />
+  const filtered = options.filter(opt =>
+    JSON.stringify(opt).toLowerCase().includes(search.toLowerCase())
+  );
 
-      {/* ── Collar V-neck ── */}
-      <path
-        d="M 150 105 Q 170 80 200 115 Q 230 80 250 105"
-        fill="none" stroke={accent} strokeWidth="10" strokeLinecap="round"
-      />
-      <path
-        d="M 150 105 Q 170 80 200 115 Q 230 80 250 105"
-        fill="none" stroke={primary} strokeWidth="5" strokeLinecap="round"
-      />
+  const handleOpen = () => { setOpen(o => !o); setSearch(''); };
+  const handleClear = (e) => { e.stopPropagation(); onChange(null); setOpen(false); };
 
-      {/* ── Shoulder seams ── */}
-      <line x1="105" y1="115" x2="150" y2="105" stroke={accent} strokeWidth="2.5" />
-      <line x1="295" y1="115" x2="250" y2="105" stroke={accent} strokeWidth="2.5" />
-
-      {/* ── Side stripes ── */}
-      <rect x="105" y="160" width="14" height="275" rx="2" fill={accent} opacity="0.55" />
-      <rect x="281" y="160" width="14" height="275" rx="2" fill={accent} opacity="0.55" />
-
-      {/* ── Sleeve accent bands ── */}
-      <path d="M 55 80 Q 40 72 35 88 L 37 100 Q 42 86 57 93 L 95 115 L 105 115 L 65 88 Z"
-        fill={accent} opacity="0.4" />
-      <path d="M 345 80 Q 360 72 365 88 L 363 100 Q 358 86 343 93 L 305 115 L 295 115 L 335 88 Z"
-        fill={accent} opacity="0.4" />
-
-      {/* ── Body shading overlay ── */}
-      <path
-        d="M 105 115 L 105 420 Q 105 435 120 435 L 280 435 Q 295 435 295 420 L 295 115 Z"
-        fill="url(#bodyShade)"
-      />
-      <path
-        d="M 105 115 L 55 80 Q 40 72 35 88 L 25 145 Q 22 160 38 163 L 105 170 Z"
-        fill="url(#sleeveShadeL)"
-      />
-      <path
-        d="M 295 115 L 345 80 Q 360 72 365 88 L 375 145 Q 378 160 362 163 L 295 170 Z"
-        fill="url(#sleeveShadeR)"
-      />
-
-      {/* ── Bottom hem accent ── */}
-      <path d="M 105 420 Q 105 435 120 435 L 280 435 Q 295 435 295 420 L 295 428 Q 295 438 280 438 L 120 438 Q 105 438 105 428 Z"
-        fill={accent} opacity="0.5" />
-
-      {/* ── Mesh texture lines (subtle) ── */}
-      {[155, 175, 195, 215, 235, 255, 275, 295, 315, 335, 355, 375, 395].map((y, i) => (
-        <line key={i} x1="119" y1={y} x2="281" y2={y} stroke={accent} strokeWidth="0.4" opacity="0.15" />
-      ))}
-
-      {/* ── Number ── */}
-      <text x="200" y="340" textAnchor="middle" fill={accent}
-        fontSize="110" fontWeight="900" fontFamily="'Arial Black', Impact, sans-serif"
-        letterSpacing="-4" opacity="0.95">
-        {number || '24'}
-      </text>
-
-      {/* ── Team Name ── */}
-      <text x="200" y="235" textAnchor="middle" fill={accent}
-        fontSize="28" fontWeight="900" fontFamily="'Arial Black', Impact, sans-serif"
-        letterSpacing="3">
-        {(text || 'TEAM NAME').toUpperCase()}
-      </text>
-
-      {/* ── Logo placeholder / uploaded logo ── */}
-      {logo ? (
-        <image href={logo} x="168" y="148" width="64" height="64" preserveAspectRatio="xMidYMid meet"
-          clipPath="circle(32px at 32px 32px)" />
-      ) : (
-        <g>
-          <circle cx="200" cy="178" r="28" fill="none" stroke={accent} strokeWidth="1.5" opacity="0.4" strokeDasharray="4 3" />
-          <text x="200" y="182" textAnchor="middle" fill={accent} fontSize="10" fontWeight="bold"
-            fontFamily="'Arial Black', sans-serif" opacity="0.5" letterSpacing="1">LOGO</text>
-        </g>
+  return (
+    <div className="mb-4" ref={ref}>
+      {label && (
+        <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-2">
+          {label}{required && ' *'}
+        </label>
       )}
-    </g>
-  </svg>
-);
+      <div className="relative">
+        {/* Trigger */}
+        <button
+          type="button"
+          onClick={handleOpen}
+          className={`w-full flex items-center justify-between gap-2 px-3 py-2.5 border text-left text-sm transition-all
+            ${open ? 'border-[#111] ring-1 ring-[#111]' : 'border-gray-200 hover:border-gray-400'}
+            ${value ? 'bg-white' : 'bg-white text-gray-400'}`}
+        >
+          <span className="flex-1 truncate min-w-0">
+            {value ? renderSelected(value) : <span className="text-gray-400 text-xs">{placeholder}</span>}
+          </span>
+          <div className="flex items-center gap-1 shrink-0">
+            {value && (
+              <span onClick={handleClear}
+                className="w-4 h-4 flex items-center justify-center text-gray-300 hover:text-gray-600 text-xs font-bold leading-none cursor-pointer">
+                ✕
+              </span>
+            )}
+            <ChevronIcon open={open} />
+          </div>
+        </button>
 
-// ── Realistic Basketball Jersey SVG (Back) ────────────────────────────────────
-const JerseyBack = ({ primary, accent, number }) => (
-  <svg viewBox="0 0 400 480" xmlns="http://www.w3.org/2000/svg" className="w-full h-full drop-shadow-2xl">
-    <defs>
-      <linearGradient id="bodyShadeB" x1="0%" y1="0%" x2="100%" y2="0%">
-        <stop offset="0%" stopColor="#000" stopOpacity="0.08" />
-        <stop offset="50%" stopColor="#000" stopOpacity="0" />
-        <stop offset="100%" stopColor="#000" stopOpacity="0.08" />
-      </linearGradient>
-      <filter id="shadowB" x="-5%" y="-5%" width="110%" height="115%">
-        <feDropShadow dx="0" dy="4" stdDeviation="6" floodColor="#000" floodOpacity="0.18" />
-      </filter>
-    </defs>
-    <g filter="url(#shadowB)">
-      <path d="M 105 115 L 105 420 Q 105 435 120 435 L 280 435 Q 295 435 295 420 L 295 115 Z"
-        fill={primary} stroke={accent} strokeWidth="2.5" />
-      <path d="M 105 115 L 55 80 Q 40 72 35 88 L 25 145 Q 22 160 38 163 L 105 170 Z"
-        fill={primary} stroke={accent} strokeWidth="2.5" />
-      <path d="M 295 115 L 345 80 Q 360 72 365 88 L 375 145 Q 378 160 362 163 L 295 170 Z"
-        fill={primary} stroke={accent} strokeWidth="2.5" />
-      {/* Back collar */}
-      <path d="M 155 108 Q 200 95 245 108" fill="none" stroke={accent} strokeWidth="10" strokeLinecap="round" />
-      <path d="M 155 108 Q 200 95 245 108" fill="none" stroke={primary} strokeWidth="5" strokeLinecap="round" />
-      <line x1="105" y1="115" x2="155" y2="108" stroke={accent} strokeWidth="2.5" />
-      <line x1="295" y1="115" x2="245" y2="108" stroke={accent} strokeWidth="2.5" />
-      <rect x="105" y="160" width="14" height="275" rx="2" fill={accent} opacity="0.55" />
-      <rect x="281" y="160" width="14" height="275" rx="2" fill={accent} opacity="0.55" />
-      <path d="M 105 420 Q 105 435 120 435 L 280 435 Q 295 435 295 420 L 295 428 Q 295 438 280 438 L 120 438 Q 105 438 105 428 Z"
-        fill={accent} opacity="0.5" />
-      {[155, 175, 195, 215, 235, 255, 275, 295, 315, 335, 355, 375, 395].map((y, i) => (
-        <line key={i} x1="119" y1={y} x2="281" y2={y} stroke={accent} strokeWidth="0.4" opacity="0.15" />
-      ))}
-      <text x="200" y="185" textAnchor="middle" fill={accent}
-        fontSize="22" fontWeight="900" fontFamily="'Arial Black', Impact, sans-serif" letterSpacing="4">
-        SURNAME
-      </text>
-      <text x="200" y="350" textAnchor="middle" fill={accent}
-        fontSize="110" fontWeight="900" fontFamily="'Arial Black', Impact, sans-serif" letterSpacing="-4">
-        {number || '24'}
-      </text>
-      <path d="M 105 115 L 105 420 Q 105 435 120 435 L 280 435 Q 295 435 295 420 L 295 115 Z"
-        fill="url(#bodyShadeB)" />
-    </g>
-  </svg>
-);
+        {/* Dropdown panel */}
+        {open && (
+          <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-white border border-gray-200 shadow-xl"
+            style={{ maxHeight: '280px', display: 'flex', flexDirection: 'column' }}>
+            {/* Search input */}
+            <div className="p-2 border-b border-gray-100 shrink-0">
+              <div className="relative">
+                <svg className="absolute left-2.5 top-2 text-gray-300" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <circle cx="11" cy="11" r="8"/><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35"/>
+                </svg>
+                <input
+                  ref={inputRef}
+                  type="text"
+                  value={search}
+                  onChange={e => setSearch(e.target.value)}
+                  placeholder="Search..."
+                  className="w-full pl-8 pr-3 py-1.5 border border-gray-200 text-xs text-[#111] focus:outline-none focus:border-[#111] bg-gray-50"
+                />
+                {search && (
+                  <button onClick={() => setSearch('')} className="absolute right-2 top-1.5 text-gray-300 hover:text-gray-500 text-xs font-bold">✕</button>
+                )}
+              </div>
+            </div>
 
-// ── Color Picker with swatches + hex input + native picker ────────────────────
+            {/* Options list */}
+            <div className="overflow-y-auto flex-1" style={{ scrollbarWidth: 'thin' }}>
+              {filtered.length === 0 ? (
+                <p className="text-xs text-gray-300 text-center py-4">No results for "{search}"</p>
+              ) : (
+                renderOption(filtered, (opt) => { onChange(opt); setOpen(false); setSearch(''); }, value)
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// ── Product Type Selector ──────────────────────────────────────────────────────
+const ProductTypeSelector = ({ value, onChange }) => {
+  // Build grouped options display
+  const renderOption = (filtered, onSelect, currentValue) => {
+    // Group filtered by category
+    const grouped = {};
+    filtered.forEach(opt => {
+      if (!grouped[opt.category]) grouped[opt.category] = [];
+      grouped[opt.category].push(opt);
+    });
+
+    return Object.entries(grouped).map(([cat, items]) => (
+      <div key={cat}>
+        <div className="px-3 py-1.5 bg-gray-50 border-b border-gray-100 sticky top-0">
+          <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">{cat}</p>
+        </div>
+        {items.map(opt => (
+          <button
+            key={opt.label}
+            onClick={() => onSelect(opt)}
+            className={`w-full text-left px-4 py-2.5 text-xs border-b border-gray-50 transition flex items-center gap-2
+              ${currentValue?.label === opt.label
+                ? 'bg-[#111] text-white font-bold'
+                : 'text-[#111] hover:bg-gray-50'}`}
+          >
+            <ShirtIcon />
+            <span>{opt.label}</span>
+            {currentValue?.label === opt.label && <CheckIcon />}
+          </button>
+        ))}
+      </div>
+    ));
+  };
+
+  return (
+    <SearchableDropdown
+      label="Apparel Type"
+      placeholder="Select apparel type..."
+      value={value}
+      onChange={onChange}
+      options={ALL_PRODUCT_TYPES}
+      required
+      renderSelected={(v) => (
+        <span className="flex items-center gap-2">
+          <ShirtIcon />
+          <span className="text-xs font-bold text-[#111]">{v.label}</span>
+          <span className="text-[9px] text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded">{v.category}</span>
+        </span>
+      )}
+      renderOption={renderOption}
+    />
+  );
+};
+
+// ── Fabric Type Selector (Dropdown) ────────────────────────────────────────────
+const FabricDropdown = ({ value, onChange }) => {
+  const renderOption = (filtered, onSelect, currentValue) => (
+    filtered.map(fabric => (
+      <button
+        key={fabric.id}
+        onClick={() => onSelect(fabric)}
+        className={`w-full text-left px-4 py-2.5 border-b border-gray-50 transition
+          ${currentValue?.id === fabric.id
+            ? 'bg-[#111] text-white'
+            : 'hover:bg-gray-50 text-[#111]'}`}
+      >
+        <div className="flex items-center justify-between gap-2">
+          <div>
+            <p className={`text-xs font-bold leading-tight ${currentValue?.id === fabric.id ? 'text-white' : 'text-[#111]'}`}>
+              {fabric.name}
+            </p>
+            <p className={`text-[9px] leading-tight mt-0.5 ${currentValue?.id === fabric.id ? 'text-gray-300' : 'text-gray-400'}`}>
+              {fabric.desc}
+            </p>
+          </div>
+          {currentValue?.id === fabric.id && <CheckIcon />}
+        </div>
+      </button>
+    ))
+  );
+
+  return (
+    <SearchableDropdown
+      label="Fabric Type"
+      placeholder="Select fabric type..."
+      value={value}
+      onChange={onChange}
+      options={FABRIC_TYPES}
+      required
+      renderSelected={(v) => (
+        <span className="flex items-center gap-2">
+          <FabricIcon />
+          <span className="text-xs font-bold text-[#111]">{v.name}</span>
+          <span className="text-[9px] text-gray-400">{v.desc}</span>
+        </span>
+      )}
+      renderOption={renderOption}
+    />
+  );
+};
+
+// ── Color Picker ───────────────────────────────────────────────────────────────
 const QUICK_COLORS = [
   '#000000','#1a1a1a','#333333','#555555','#808080','#aaaaaa','#cccccc','#ffffff',
   '#ff0000','#cc0000','#ff4444','#ff6600','#ff8800','#ffaa00','#ffcc00','#ffff00',
@@ -224,20 +349,12 @@ const ColorPicker = ({ label, value, onChange }) => {
     <div className="mb-4">
       <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-2">{label}</label>
       <div className="relative" ref={ref}>
-        {/* Trigger row */}
         <div className="flex items-center gap-2 cursor-pointer" onClick={() => setOpen(o => !o)}>
           <div className="w-9 h-9 rounded border-2 border-gray-300 shadow-sm flex-shrink-0 transition-transform hover:scale-110"
             style={{ backgroundColor: value, borderColor: value === '#ffffff' ? '#ccc' : value }} />
-          <input
-            type="text"
-            value={hex}
-            onChange={handleHexInput}
-            onClick={e => e.stopPropagation()}
-            placeholder="#000000"
-            maxLength={7}
-            className="w-28 px-2 py-1.5 border border-gray-200 text-xs font-mono text-[#111] focus:outline-none focus:border-[#111] uppercase"
-          />
-          {/* Native color input hidden behind a styled button */}
+          <input type="text" value={hex} onChange={handleHexInput} onClick={e => e.stopPropagation()}
+            placeholder="#000000" maxLength={7}
+            className="w-28 px-2 py-1.5 border border-gray-200 text-xs font-mono text-[#111] focus:outline-none focus:border-[#111] uppercase" />
           <label className="cursor-pointer px-2 py-1.5 border border-gray-200 text-[10px] font-bold text-gray-500 hover:bg-gray-50 uppercase tracking-wide flex items-center gap-1">
             <span>🎨</span>
             <input type="color" value={value} onChange={handleNativePicker} className="sr-only" />
@@ -247,8 +364,6 @@ const ColorPicker = ({ label, value, onChange }) => {
             {open ? '▲' : '▼'}
           </button>
         </div>
-
-        {/* Swatch dropdown */}
         {open && (
           <div className="absolute z-50 top-12 left-0 bg-white border border-gray-200 shadow-xl p-3 w-72">
             <p className="text-[9px] text-gray-400 uppercase tracking-widest mb-2 font-bold">Quick Colors</p>
@@ -264,8 +379,7 @@ const ColorPicker = ({ label, value, onChange }) => {
             <div className="border-t border-gray-100 pt-2">
               <p className="text-[9px] text-gray-400 uppercase tracking-widest mb-1.5 font-bold">Custom Color</p>
               <div className="flex items-center gap-2">
-                <input type="color" value={value} onChange={handleNativePicker}
-                  className="w-10 h-9 border border-gray-200 cursor-pointer rounded" />
+                <input type="color" value={value} onChange={handleNativePicker} className="w-10 h-9 border border-gray-200 cursor-pointer rounded" />
                 <input type="text" value={hex} onChange={handleHexInput} placeholder="#000000" maxLength={7}
                   className="flex-1 px-2 py-1.5 border border-gray-200 text-xs font-mono focus:outline-none focus:border-[#111] uppercase" />
                 <button onClick={() => { if (/^#[0-9a-fA-F]{6}$/.test(hex)) { onChange(hex); setOpen(false); } }}
@@ -315,9 +429,87 @@ const StepIndicator = ({ currentStep, completedSteps }) => {
   );
 };
 
+// ── Jersey SVG Front ───────────────────────────────────────────────────────────
+const JerseyFront = ({ primary, accent, text, number, logo }) => (
+  <svg viewBox="0 0 400 480" xmlns="http://www.w3.org/2000/svg" className="w-full h-full drop-shadow-2xl">
+    <defs>
+      <linearGradient id="bodyShade" x1="0%" y1="0%" x2="100%" y2="0%">
+        <stop offset="0%" stopColor="#000" stopOpacity="0.08" />
+        <stop offset="50%" stopColor="#000" stopOpacity="0" />
+        <stop offset="100%" stopColor="#000" stopOpacity="0.08" />
+      </linearGradient>
+      <filter id="shadow" x="-5%" y="-5%" width="110%" height="115%">
+        <feDropShadow dx="0" dy="4" stdDeviation="6" floodColor="#000" floodOpacity="0.18" />
+      </filter>
+    </defs>
+    <g filter="url(#shadow)">
+      <path d="M 105 115 L 105 420 Q 105 435 120 435 L 280 435 Q 295 435 295 420 L 295 115 Z" fill={primary} stroke={accent} strokeWidth="2.5" />
+      <path d="M 105 115 L 55 80 Q 40 72 35 88 L 25 145 Q 22 160 38 163 L 105 170 Z" fill={primary} stroke={accent} strokeWidth="2.5" />
+      <path d="M 295 115 L 345 80 Q 360 72 365 88 L 375 145 Q 378 160 362 163 L 295 170 Z" fill={primary} stroke={accent} strokeWidth="2.5" />
+      <path d="M 150 105 Q 170 80 200 115 Q 230 80 250 105" fill="none" stroke={accent} strokeWidth="10" strokeLinecap="round" />
+      <path d="M 150 105 Q 170 80 200 115 Q 230 80 250 105" fill="none" stroke={primary} strokeWidth="5" strokeLinecap="round" />
+      <line x1="105" y1="115" x2="150" y2="105" stroke={accent} strokeWidth="2.5" />
+      <line x1="295" y1="115" x2="250" y2="105" stroke={accent} strokeWidth="2.5" />
+      <rect x="105" y="160" width="14" height="275" rx="2" fill={accent} opacity="0.55" />
+      <rect x="281" y="160" width="14" height="275" rx="2" fill={accent} opacity="0.55" />
+      <path d="M 105 115 L 105 420 Q 105 435 120 435 L 280 435 Q 295 435 295 420 L 295 115 Z" fill="url(#bodyShade)" />
+      <path d="M 105 420 Q 105 435 120 435 L 280 435 Q 295 435 295 420 L 295 428 Q 295 438 280 438 L 120 438 Q 105 438 105 428 Z" fill={accent} opacity="0.5" />
+      <text x="200" y="340" textAnchor="middle" fill={accent} fontSize="110" fontWeight="900" fontFamily="'Arial Black', Impact, sans-serif" letterSpacing="-4" opacity="0.95">
+        {number || '24'}
+      </text>
+      <text x="200" y="235" textAnchor="middle" fill={accent} fontSize="28" fontWeight="900" fontFamily="'Arial Black', Impact, sans-serif" letterSpacing="3">
+        {(text || 'TEAM NAME').toUpperCase()}
+      </text>
+      {logo ? (
+        <image href={logo} x="168" y="148" width="64" height="64" preserveAspectRatio="xMidYMid meet" clipPath="circle(32px at 32px 32px)" />
+      ) : (
+        <g>
+          <circle cx="200" cy="178" r="28" fill="none" stroke={accent} strokeWidth="1.5" opacity="0.4" strokeDasharray="4 3" />
+          <text x="200" y="182" textAnchor="middle" fill={accent} fontSize="10" fontWeight="bold" fontFamily="'Arial Black', sans-serif" opacity="0.5" letterSpacing="1">LOGO</text>
+        </g>
+      )}
+    </g>
+  </svg>
+);
+
+// ── Jersey SVG Back ────────────────────────────────────────────────────────────
+const JerseyBack = ({ primary, accent, number }) => (
+  <svg viewBox="0 0 400 480" xmlns="http://www.w3.org/2000/svg" className="w-full h-full drop-shadow-2xl">
+    <defs>
+      <linearGradient id="bodyShadeB" x1="0%" y1="0%" x2="100%" y2="0%">
+        <stop offset="0%" stopColor="#000" stopOpacity="0.08" />
+        <stop offset="50%" stopColor="#000" stopOpacity="0" />
+        <stop offset="100%" stopColor="#000" stopOpacity="0.08" />
+      </linearGradient>
+      <filter id="shadowB" x="-5%" y="-5%" width="110%" height="115%">
+        <feDropShadow dx="0" dy="4" stdDeviation="6" floodColor="#000" floodOpacity="0.18" />
+      </filter>
+    </defs>
+    <g filter="url(#shadowB)">
+      <path d="M 105 115 L 105 420 Q 105 435 120 435 L 280 435 Q 295 435 295 420 L 295 115 Z" fill={primary} stroke={accent} strokeWidth="2.5" />
+      <path d="M 105 115 L 55 80 Q 40 72 35 88 L 25 145 Q 22 160 38 163 L 105 170 Z" fill={primary} stroke={accent} strokeWidth="2.5" />
+      <path d="M 295 115 L 345 80 Q 360 72 365 88 L 375 145 Q 378 160 362 163 L 295 170 Z" fill={primary} stroke={accent} strokeWidth="2.5" />
+      <path d="M 155 108 Q 200 95 245 108" fill="none" stroke={accent} strokeWidth="10" strokeLinecap="round" />
+      <path d="M 155 108 Q 200 95 245 108" fill="none" stroke={primary} strokeWidth="5" strokeLinecap="round" />
+      <line x1="105" y1="115" x2="155" y2="108" stroke={accent} strokeWidth="2.5" />
+      <line x1="295" y1="115" x2="245" y2="108" stroke={accent} strokeWidth="2.5" />
+      <rect x="105" y="160" width="14" height="275" rx="2" fill={accent} opacity="0.55" />
+      <rect x="281" y="160" width="14" height="275" rx="2" fill={accent} opacity="0.55" />
+      <path d="M 105 420 Q 105 435 120 435 L 280 435 Q 295 435 295 420 L 295 428 Q 295 438 280 438 L 120 438 Q 105 438 105 428 Z" fill={accent} opacity="0.5" />
+      <text x="200" y="185" textAnchor="middle" fill={accent} fontSize="22" fontWeight="900" fontFamily="'Arial Black', Impact, sans-serif" letterSpacing="4">SURNAME</text>
+      <text x="200" y="350" textAnchor="middle" fill={accent} fontSize="110" fontWeight="900" fontFamily="'Arial Black', Impact, sans-serif" letterSpacing="-4">
+        {number || '24'}
+      </text>
+      <path d="M 105 115 L 105 420 Q 105 435 120 435 L 280 435 Q 295 435 295 420 L 295 115 Z" fill="url(#bodyShadeB)" />
+    </g>
+  </svg>
+);
+
 // ── Design Preview Panel ───────────────────────────────────────────────────────
-const DesignPreview = ({ selectedProduct, primary, accent, text, number, logo, quantity }) => {
+const DesignPreview = ({ selectedProduct, apparelType, primary, accent, text, number, logo, quantity, fabricType }) => {
   const [side, setSide] = useState('front');
+  const selectedFabric = FABRIC_TYPES.find(f => f.id === fabricType?.id);
+
   return (
     <div className="bg-white border border-gray-200 flex flex-col" style={{ height: '100%' }}>
       <div className="px-5 py-3 border-b border-gray-100 flex items-center justify-between shrink-0">
@@ -333,7 +525,7 @@ const DesignPreview = ({ selectedProduct, primary, accent, text, number, logo, q
       </div>
 
       <div className="flex-1 flex items-center justify-center p-8" style={{ background: 'radial-gradient(ellipse at center, #e8e8e8 0%, #d0d0d0 100%)' }}>
-        {selectedProduct ? (
+        {selectedProduct || apparelType ? (
           <div style={{ width: '260px', height: '312px' }}>
             {side === 'front'
               ? <JerseyFront primary={primary} accent={accent} text={text} number={number} logo={logo} />
@@ -348,16 +540,38 @@ const DesignPreview = ({ selectedProduct, primary, accent, text, number, logo, q
       </div>
 
       <div className="px-5 py-4 border-t border-gray-100 shrink-0">
-        {selectedProduct ? (
+        {(selectedProduct || apparelType) ? (
           <>
             <div className="flex justify-between items-center mb-1">
-              <span className="text-xs text-gray-500 font-medium">{selectedProduct.name}</span>
-              <span className="text-xs text-gray-400">{quantity} × ₱{selectedProduct.price}</span>
+              <span className="text-xs text-gray-500 font-medium truncate pr-2">
+                {apparelType?.label || selectedProduct?.name || '—'}
+              </span>
+              {selectedProduct && <span className="text-xs text-gray-400 shrink-0">{quantity} × ₱{selectedProduct.price}</span>}
             </div>
-            <div className="flex justify-between items-center mt-2 pt-2 border-t border-gray-100">
-              <span className="text-xs text-gray-500 uppercase tracking-wider font-bold">Est. Total</span>
-              <span className="text-2xl font-black text-[#111]">₱{(selectedProduct.price * quantity).toFixed(2)}</span>
-            </div>
+            {/* Apparel type badge */}
+            {apparelType && (
+              <div className="flex items-center gap-1.5 mt-1 mb-1">
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-gray-100 border border-gray-200 text-[10px] font-bold text-gray-600 uppercase tracking-wide">
+                  <ShirtIcon />
+                  {apparelType.category}
+                </span>
+              </div>
+            )}
+            {/* Fabric badge */}
+            {selectedFabric && (
+              <div className="flex items-center gap-1.5 mt-1 mb-1">
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-50 border border-blue-100 text-[10px] font-bold text-blue-600 uppercase tracking-wide">
+                  <FabricIcon />
+                  {selectedFabric.name}
+                </span>
+              </div>
+            )}
+            {selectedProduct && (
+              <div className="flex justify-between items-center mt-2 pt-2 border-t border-gray-100">
+                <span className="text-xs text-gray-500 uppercase tracking-wider font-bold">Est. Total</span>
+                <span className="text-2xl font-black text-[#111]">₱{(selectedProduct.price * quantity).toFixed(2)}</span>
+              </div>
+            )}
           </>
         ) : (
           <p className="text-xs text-gray-300 text-center">No product selected</p>
@@ -388,6 +602,9 @@ export default function CustomizePage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showReview, setShowReview] = useState(false);
 
+  // Apparel type (new)
+  const [apparelType, setApparelType] = useState(null);
+
   // Colors
   const [primaryColor, setPrimaryColor] = useState('#ffffff');
   const [accentColor, setAccentColor] = useState('#f5e6a3');
@@ -395,6 +612,9 @@ export default function CustomizePage() {
   const [color2, setColor2] = useState('#ffffff');
   const [color3, setColor3] = useState('#ffffff');
   const [quantity, setQuantity] = useState(1);
+
+  // Fabric (now object)
+  const [fabricType, setFabricType] = useState(null);
 
   // Text
   const [customText, setCustomText] = useState('');
@@ -462,7 +682,10 @@ export default function CustomizePage() {
   };
 
   const nextStep = () => {
-    if (currentStep === 1 && !selectedProduct) { toast.error('Please select a product'); return; }
+    if (currentStep === 1) {
+      if (!apparelType) { toast.error('Please select an apparel type'); return; }
+      if (!fabricType) { toast.error('Please select a fabric type'); return; }
+    }
     if (currentStep === 4) { handleShowReview(); return; }
     goToStep(currentStep + 1);
   };
@@ -491,10 +714,16 @@ export default function CustomizePage() {
         phoneNumber,
         orderType,
         shippingAddress: orderType === 'shipping' ? shippingAddress : null,
-        items: [{ productId: selectedProduct.id, productName: selectedProduct.name, quantity: parseInt(quantity), price: selectedProduct.price }],
+        items: selectedProduct
+          ? [{ productId: selectedProduct.id, productName: selectedProduct.name, quantity: parseInt(quantity), price: selectedProduct.price }]
+          : [],
         customizationDetails: {
+          apparelType: apparelType?.label || null,
+          apparelCategory: apparelType?.category || null,
           primaryColor, accentColor,
           additionalColors: { color1, color2, color3 },
+          fabricType: fabricType?.id || null,
+          fabricName: fabricType?.name || null,
           customText, jerseyNumber, fontFamily, jerseyLayoutComments,
           logoImage: logoPreview || null,
         },
@@ -535,7 +764,23 @@ export default function CustomizePage() {
 
           <div className="mb-8">
             {[
-              ['Product', selectedProduct?.name],
+              ['Apparel Type', apparelType
+                ? <span key="at" className="flex justify-end items-center gap-2">
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-gray-100 border border-gray-200 text-[10px] font-bold text-gray-600 uppercase">
+                      <ShirtIcon />{apparelType.label}
+                    </span>
+                  </span>
+                : <span key="at-none" className="text-gray-400">Not selected</span>
+              ],
+              ['Product', selectedProduct?.name || <span className="text-gray-400">None</span>],
+              ['Fabric Type', fabricType
+                ? <span key="fab" className="flex justify-end items-center gap-2">
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-50 border border-blue-100 text-[10px] font-bold text-blue-600 uppercase">
+                      <FabricIcon />{fabricType.name}
+                    </span>
+                  </span>
+                : <span key="fab-none" className="text-gray-400">Not selected</span>
+              ],
               ['Primary Color', <span key="pc" className="flex justify-end gap-2 items-center"><div className="w-5 h-5 rounded border border-gray-200" style={{ backgroundColor: primaryColor }} /><span className="text-xs text-gray-400">{primaryColor}</span></span>],
               ['Accent Color', <span key="ac" className="flex justify-end gap-2 items-center"><div className="w-5 h-5 rounded border border-gray-200" style={{ backgroundColor: accentColor }} /><span className="text-xs text-gray-400">{accentColor}</span></span>],
               ['Text', customText || 'TEAM NAME'],
@@ -554,7 +799,7 @@ export default function CustomizePage() {
           </div>
 
           <div className="bg-gray-50 p-4 mb-6 space-y-2">
-            <div className="flex justify-between text-sm"><span className="text-gray-500">Unit Price</span><span>₱{selectedProduct?.price}</span></div>
+            <div className="flex justify-between text-sm"><span className="text-gray-500">Unit Price</span><span>₱{selectedProduct?.price || '—'}</span></div>
             <div className="flex justify-between text-sm"><span className="text-gray-500">Quantity</span><span>{quantity}×</span></div>
             <div className="flex justify-between text-sm border-t border-gray-200 pt-2"><span className="text-gray-500">Order Total</span><span className="font-bold">₱{totalPrice}</span></div>
             <div className="flex justify-between text-sm bg-amber-100 border border-amber-300 rounded px-3 py-2 mt-2">
@@ -603,14 +848,23 @@ export default function CustomizePage() {
                 <div className="space-y-5">
                   <h2 className="text-base font-black text-[#111] uppercase tracking-wide">Colors & Quantity</h2>
 
+                  {/* ── Apparel Type Dropdown ── */}
+                  <ProductTypeSelector value={apparelType} onChange={setApparelType} />
+
+                  {/* ── Product (from DB) ── */}
                   <div>
-                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-2">Select Product</label>
-                    <select value={selectedProduct?.id || ''} onChange={(e) => setSelectedProduct(products.find(p => p.id === e.target.value))}
+                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-2">
+                      Pricing Product <span className="text-gray-300 font-normal normal-case tracking-normal">(optional — for price estimation)</span>
+                    </label>
+                    <select value={selectedProduct?.id || ''} onChange={(e) => setSelectedProduct(products.find(p => p.id === e.target.value) || null)}
                       className="w-full px-3 py-2.5 border border-gray-200 text-sm text-[#111] bg-white focus:outline-none focus:border-[#111]">
                       <option value="">Choose a product...</option>
                       {products.map(p => <option key={p.id} value={p.id}>{p.name} — ₱{p.price}</option>)}
                     </select>
                   </div>
+
+                  {/* ── Fabric Dropdown ── */}
+                  <FabricDropdown value={fabricType} onChange={setFabricType} />
 
                   <ColorPicker label="Primary Base Color" value={primaryColor} onChange={setPrimaryColor} />
                   <ColorPicker label="Accent Color" value={accentColor} onChange={setAccentColor} />
@@ -741,9 +995,7 @@ export default function CustomizePage() {
                     <div>
                       <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-2">Shipping Address</label>
                       <div className="grid grid-cols-2 gap-2">
-                        {[
-                          ['First Name *', 'firstName'], ['Last Name *', 'lastName'],
-                        ].map(([ph, key]) => (
+                        {[['First Name *', 'firstName'], ['Last Name *', 'lastName']].map(([ph, key]) => (
                           <input key={key} type="text" placeholder={ph} value={shippingAddress[key]}
                             onChange={(e) => setShippingAddress({ ...shippingAddress, [key]: e.target.value })}
                             className="px-3 py-2.5 border border-gray-200 text-sm text-[#111] focus:outline-none focus:border-[#111]" />
@@ -795,12 +1047,14 @@ export default function CustomizePage() {
           <div className="flex-1 min-w-0">
             <DesignPreview
               selectedProduct={selectedProduct}
+              apparelType={apparelType}
               primary={primaryColor}
               accent={accentColor}
               text={customText}
               number={jerseyNumber}
               logo={logoPreview}
               quantity={quantity}
+              fabricType={fabricType}
             />
           </div>
         </div>
