@@ -34,31 +34,32 @@ export default function AdminProducts() {
   };
 
   const handleSubmit = async (e) => {
-  e.preventDefault();
-  let imageBase64 = null;
-  if (formData.image) {
-    imageBase64 = await new Promise((resolve) => {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const img = new Image();
-        img.onload = () => {
-          const canvas = document.createElement('canvas');
-          let w = img.width, h = img.height;
-          const max = 500;
-          if (w > h && w > max) { h = (h * max) / w; w = max; }
-          else if (h > max) { w = (w * max) / h; h = max; }
-          canvas.width = w;
-          canvas.height = h;
-          canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-          resolve(canvas.toDataURL('image/jpeg', 0.4));
+    e.preventDefault();
+    let imageBase64 = null;
+    if (formData.image) {
+      imageBase64 = await new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const img = new Image();
+          img.onload = () => {
+            const canvas = document.createElement('canvas');
+            let w = img.width, h = img.height;
+            const max = 500;
+            if (w > h && w > max) { h = (h * max) / w; w = max; }
+            else if (h > max) { w = (w * max) / h; h = max; }
+            canvas.width = w;
+            canvas.height = h;
+            canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+            resolve(canvas.toDataURL('image/jpeg', 0.4));
+          };
+          img.src = e.target.result;
         };
-        img.src = e.target.result;
-      };
-      reader.readAsDataURL(formData.image);
-    });
-  }
-  submitProduct(imageBase64);
-};
+        reader.readAsDataURL(formData.image);
+      });
+    }
+    submitProduct(imageBase64);
+  };
+
   const submitProduct = async (imageBase64) => {
     try {
       const submitData = {
@@ -141,13 +142,20 @@ export default function AdminProducts() {
                 required
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-secondary"
               />
-              <input
-                type="text"
-                placeholder="Category"
+
+              {/* Category Dropdown */}
+              <select
                 value={formData.category}
                 onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-secondary"
-              />
+                required
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-secondary bg-white text-gray-700"
+              >
+                <option value="">Select Category</option>
+                <option value="Custom Sportswear">Custom Sportswear</option>
+                <option value="Custom Apparel">Custom Apparel</option>
+                <option value="Excluded / Add-Ons">Excluded / Add-Ons</option>
+              </select>
+
               <input
                 type="number"
                 placeholder="Price"
