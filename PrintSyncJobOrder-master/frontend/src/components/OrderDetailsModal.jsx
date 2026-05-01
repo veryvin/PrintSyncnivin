@@ -36,30 +36,23 @@ export default function OrderDetailsModal({
     try {
       let d;
       
-      // Try Firebase Timestamp .toDate() method
       if (date && typeof date.toDate === 'function') {
         d = date.toDate();
       } 
-      // Try Firebase Timestamp as object with seconds and nanoseconds
       else if (date && typeof date === 'object' && (date.seconds || date._seconds)) {
         const seconds = date.seconds || date._seconds;
         d = new Date(seconds * 1000);
       }
-      // Try Date instance
       else if (date instanceof Date) {
         d = date;
       }
-      // Try ISO string
       else if (typeof date === 'string') {
         d = new Date(date);
       }
-      // Try Unix timestamp (milliseconds)
       else if (typeof date === 'number') {
         d = new Date(date);
       }
-      // Last resort: check if it's any object with numeric properties (Firestore timestamp)
       else if (typeof date === 'object' && date !== null) {
-        // Check for Firestore-like object
         if (date.seconds !== undefined) {
           d = new Date(date.seconds * 1000);
         } else if (date._seconds !== undefined) {
@@ -72,7 +65,6 @@ export default function OrderDetailsModal({
         return 'N/A';
       }
       
-      // Validate the date
       if (!d || isNaN(d.getTime())) {
         return 'N/A';
       }
@@ -172,6 +164,10 @@ export default function OrderDetailsModal({
       setApprovePaymentLoading(false);
     }
   };
+
+  // Derive lineup from customizationDetails
+  const lineup = order.customizationDetails?.lineup || [];
+  const oversizedSizes = ['XXL', '3XL', '4XL', '5XL'];
 
   return (
     <div className="fixed inset-0 z-50 flex">
@@ -359,6 +355,96 @@ export default function OrderDetailsModal({
                     />
                   </div>
                 )}
+              </div>
+            </div>
+          )}
+
+          {/* ── TEAM LINEUP ── */}
+          {lineup.length > 0 && (
+            <div>
+              <h3 className="text-lg font-semibold text-primary mb-3">
+                Team Lineup
+                <span className="ml-2 text-sm font-normal text-gray-500">
+                  ({lineup.length} player{lineup.length !== 1 ? 's' : ''})
+                </span>
+              </h3>
+              <div className="rounded-lg overflow-hidden border border-border">
+                {/* Table Header */}
+                <div
+                  className="grid bg-gray-800 text-white px-4 py-2.5"
+                  style={{ gridTemplateColumns: '36px 1fr 64px 64px' }}
+                >
+                  <p className="text-[10px] font-bold uppercase tracking-widest">#</p>
+                  <p className="text-[10px] font-bold uppercase tracking-widest">Surname</p>
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-center">No.</p>
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-center">Size</p>
+                </div>
+
+                {/* Table Rows */}
+                <div
+                  className="max-h-64 overflow-y-auto"
+                  style={{ scrollbarWidth: 'thin' }}
+                >
+                  {lineup.map((player, idx) => {
+                    const isOversized = oversizedSizes.includes(
+                      (player.size || '').toUpperCase()
+                    );
+                    return (
+                      <div
+                        key={idx}
+                        className={`grid px-4 py-2.5 border-b border-border last:border-b-0 ${
+                          idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'
+                        }`}
+                        style={{ gridTemplateColumns: '36px 1fr 64px 64px' }}
+                      >
+                        <span className="text-xs font-black text-gray-400 self-center">
+                          {idx + 1}
+                        </span>
+                        <span className="text-sm font-bold text-gray-800 uppercase self-center">
+                          {player.surname || '—'}
+                        </span>
+                        <span className="text-sm font-black text-gray-800 text-center self-center">
+                          {player.jerseyNumber || '—'}
+                        </span>
+                        <span className="text-center self-center">
+                          {isOversized ? (
+                            <span className="inline-block px-2 py-0.5 bg-pink-500 text-white text-[10px] font-bold rounded-full">
+                              {player.size}
+                            </span>
+                          ) : (
+                            <span className="text-sm font-bold text-gray-600">
+                              {player.size || '—'}
+                            </span>
+                          )}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Footer summary */}
+                <div className="bg-gray-50 border-t border-border px-4 py-2 flex items-center gap-3">
+                  <span className="text-xs text-gray-500">
+                    {lineup.length} player{lineup.length !== 1 ? 's' : ''} total
+                  </span>
+                  {lineup.some(p => oversizedSizes.includes((p.size || '').toUpperCase())) && (
+                    <span className="flex items-center gap-1 text-[10px] text-pink-600 font-medium">
+                      <span className="inline-block w-2.5 h-2.5 rounded-full bg-pink-500"></span>
+                      Oversized sizes present
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* No lineup provided notice */}
+          {lineup.length === 0 && order.customizationDetails && (
+            <div>
+              <h3 className="text-lg font-semibold text-primary mb-3">Team Lineup</h3>
+              <div className="bg-light rounded-lg p-4 text-center">
+                <p className="text-sm text-gray-400 italic">No lineup provided by customer.</p>
+                <p className="text-xs text-gray-400 mt-1">Contact the customer to confirm player details.</p>
               </div>
             </div>
           )}
