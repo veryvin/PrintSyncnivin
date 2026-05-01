@@ -4,20 +4,21 @@ import { onAuthStateChanged, signOut, signInWithEmailAndPassword, createUserWith
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 
 export const useAuthStore = create((set) => {
-  // Listen to auth state changes
   onAuthStateChanged(auth, async (user) => {
     if (user) {
       const userDoc = await getDoc(doc(db, 'users', user.uid));
       set({
         user: user,
         userRole: userDoc.data()?.role || 'customer',
-        isLoading: false,
+        isAuthenticated: true,
+        isLoading: false,  // ✅ only set false AFTER firebase confirms
       });
     } else {
       set({
         user: null,
         userRole: null,
-        isLoading: false,
+        isAuthenticated: false,
+        isLoading: false,  // ✅ only set false AFTER firebase confirms
       });
     }
   });
@@ -25,23 +26,21 @@ export const useAuthStore = create((set) => {
   return {
     user: null,
     userRole: null,
-    isLoading: true,
+    isAuthenticated: false,
+    isLoading: true, // ✅ starts true, waits for onAuthStateChanged
 
     register: async (email, password, name) => {
       try {
         set({ isLoading: true });
         const result = await createUserWithEmailAndPassword(auth, email, password);
         await updateProfile(result.user, { displayName: name });
-        
-        // Create user document in Firestore
         await setDoc(doc(db, 'users', result.user.uid), {
           name,
           email,
           role: 'customer',
           createdAt: new Date(),
         });
-
-        set({ user: result.user, userRole: 'customer', isLoading: false });
+        set({ user: result.user, userRole: 'customer', isAuthenticated: true, isLoading: false });
         return result.user;
       } catch (error) {
         set({ isLoading: false });
@@ -54,7 +53,7 @@ export const useAuthStore = create((set) => {
         set({ isLoading: true });
         const result = await signInWithEmailAndPassword(auth, email, password);
         const userDoc = await getDoc(doc(db, 'users', result.user.uid));
-        set({ user: result.user, userRole: userDoc.data()?.role, isLoading: false });
+        set({ user: result.user, userRole: userDoc.data()?.role || 'customer', isAuthenticated: true, isLoading: false });
         return result.user;
       } catch (error) {
         set({ isLoading: false });
@@ -66,7 +65,7 @@ export const useAuthStore = create((set) => {
       try {
         set({ isLoading: true });
         await signOut(auth);
-        set({ user: null, userRole: null, isLoading: false });
+        set({ user: null, userRole: null, isAuthenticated: false, isLoading: false });
       } catch (error) {
         set({ isLoading: false });
         throw error;
