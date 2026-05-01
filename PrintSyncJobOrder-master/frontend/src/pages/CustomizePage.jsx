@@ -6,49 +6,6 @@ import toast from 'react-hot-toast';
 
 const DEPOSIT_AMOUNT = 500;
 
-// ── Product Types ──────────────────────────────────────────────────────────────
-const PRODUCT_CATEGORIES = [
-  {
-    category: 'Custom Sportswear',
-    note: '(Round Neck / V-Neck)',
-    items: [
-      'Basketball Jersey Regular Cut',
-      'Basketball Jersey Shorts',
-      'Basketball Jersey Set Regular Cut',
-      'Basketball Jersey Nike Elite Cut',
-      'Basketball Jersey Nike Elite Cut Shorts',
-      'Basketball Jersey Set Nike Elite Cut',
-      'Volleyball Jersey Sleeveless/T-Shirt (Round Neck/Vneck)',
-      'Volleyball Shorts',
-      'Volleyball Jersey Set Sleeveless/T-Shirt',
-      'Jersey Regular Cut + NBA Cut',
-      'Football Jersey (Dual Fabric)',
-      'Football Jersey (Single Fabric)',
-      'Hockey Jersey (Single Mesh Fabric)',
-      'Hockey Jersey (Dual Fabric Cut & Sew/2 Fabric)',
-      'Reversible Jersey (Lightweight)',
-      'Reversible Jersey (Lightweight Mesh)',
-    ],
-  },
-  {
-    category: 'Custom Apparel',
-    items: [
-      'T-Shirt',
-      'Longsleeve',
-      'Longsleeve Hoodie',
-      'Poloshirt Knitted Collar',
-      'Poloshirt Neoprane Collar',
-      'Chinese Collar',
-      'Chinese Collar Longsleeve',
-    ],
-  },
-];
-
-// Flat list for searching
-const ALL_PRODUCT_TYPES = PRODUCT_CATEGORIES.flatMap(cat =>
-  cat.items.map(item => ({ label: item, category: cat.category }))
-);
-
 // ── Fabric Types ───────────────────────────────────────────────────────────────
 const FABRIC_TYPES = [
   { id: 'AIRCOOL', name: 'Aircool', desc: 'Lightweight airflow mesh' },
@@ -117,7 +74,7 @@ const ShirtIcon = () => (
   </svg>
 );
 
-// ── Searchable Dropdown (generic) ─────────────────────────────────────────────
+// ── Fabric Type Selector (Dropdown) ────────────────────────────────────────────
 const SearchableDropdown = ({ label, placeholder, value, onChange, options, renderOption, renderSelected, required }) => {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
@@ -149,7 +106,6 @@ const SearchableDropdown = ({ label, placeholder, value, onChange, options, rend
         </label>
       )}
       <div className="relative">
-        {/* Trigger */}
         <button
           type="button"
           onClick={handleOpen}
@@ -171,11 +127,9 @@ const SearchableDropdown = ({ label, placeholder, value, onChange, options, rend
           </div>
         </button>
 
-        {/* Dropdown panel */}
         {open && (
           <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-white border border-gray-200 shadow-xl"
             style={{ maxHeight: '280px', display: 'flex', flexDirection: 'column' }}>
-            {/* Search input */}
             <div className="p-2 border-b border-gray-100 shrink-0">
               <div className="relative">
                 <svg className="absolute left-2.5 top-2 text-gray-300" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
@@ -194,8 +148,6 @@ const SearchableDropdown = ({ label, placeholder, value, onChange, options, rend
                 )}
               </div>
             </div>
-
-            {/* Options list */}
             <div className="overflow-y-auto flex-1" style={{ scrollbarWidth: 'thin' }}>
               {filtered.length === 0 ? (
                 <p className="text-xs text-gray-300 text-center py-4">No results for "{search}"</p>
@@ -210,61 +162,6 @@ const SearchableDropdown = ({ label, placeholder, value, onChange, options, rend
   );
 };
 
-// ── Product Type Selector ──────────────────────────────────────────────────────
-const ProductTypeSelector = ({ value, onChange }) => {
-  // Build grouped options display
-  const renderOption = (filtered, onSelect, currentValue) => {
-    // Group filtered by category
-    const grouped = {};
-    filtered.forEach(opt => {
-      if (!grouped[opt.category]) grouped[opt.category] = [];
-      grouped[opt.category].push(opt);
-    });
-
-    return Object.entries(grouped).map(([cat, items]) => (
-      <div key={cat}>
-        <div className="px-3 py-1.5 bg-gray-50 border-b border-gray-100 sticky top-0">
-          <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">{cat}</p>
-        </div>
-        {items.map(opt => (
-          <button
-            key={opt.label}
-            onClick={() => onSelect(opt)}
-            className={`w-full text-left px-4 py-2.5 text-xs border-b border-gray-50 transition flex items-center gap-2
-              ${currentValue?.label === opt.label
-                ? 'bg-[#111] text-white font-bold'
-                : 'text-[#111] hover:bg-gray-50'}`}
-          >
-            <ShirtIcon />
-            <span>{opt.label}</span>
-            {currentValue?.label === opt.label && <CheckIcon />}
-          </button>
-        ))}
-      </div>
-    ));
-  };
-
-  return (
-    <SearchableDropdown
-      label="Apparel Type"
-      placeholder="Select apparel type..."
-      value={value}
-      onChange={onChange}
-      options={ALL_PRODUCT_TYPES}
-      required
-      renderSelected={(v) => (
-        <span className="flex items-center gap-2">
-          <ShirtIcon />
-          <span className="text-xs font-bold text-[#111]">{v.label}</span>
-          <span className="text-[9px] text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded">{v.category}</span>
-        </span>
-      )}
-      renderOption={renderOption}
-    />
-  );
-};
-
-// ── Fabric Type Selector (Dropdown) ────────────────────────────────────────────
 const FabricDropdown = ({ value, onChange }) => {
   const renderOption = (filtered, onSelect, currentValue) => (
     filtered.map(fabric => (
@@ -506,7 +403,7 @@ const JerseyBack = ({ primary, accent, number }) => (
 );
 
 // ── Design Preview Panel ───────────────────────────────────────────────────────
-const DesignPreview = ({ selectedProduct, apparelType, primary, accent, text, number, logo, quantity, fabricType }) => {
+const DesignPreview = ({ selectedProduct, primary, accent, text, number, logo, quantity, fabricType }) => {
   const [side, setSide] = useState('front');
   const selectedFabric = FABRIC_TYPES.find(f => f.id === fabricType?.id);
 
@@ -525,7 +422,7 @@ const DesignPreview = ({ selectedProduct, apparelType, primary, accent, text, nu
       </div>
 
       <div className="flex-1 flex items-center justify-center p-8" style={{ background: 'radial-gradient(ellipse at center, #e8e8e8 0%, #d0d0d0 100%)' }}>
-        {selectedProduct || apparelType ? (
+        {selectedProduct ? (
           <div style={{ width: '260px', height: '312px' }}>
             {side === 'front'
               ? <JerseyFront primary={primary} accent={accent} text={text} number={number} logo={logo} />
@@ -540,23 +437,21 @@ const DesignPreview = ({ selectedProduct, apparelType, primary, accent, text, nu
       </div>
 
       <div className="px-5 py-4 border-t border-gray-100 shrink-0">
-        {(selectedProduct || apparelType) ? (
+        {selectedProduct ? (
           <>
             <div className="flex justify-between items-center mb-1">
               <span className="text-xs text-gray-500 font-medium truncate pr-2">
-                {apparelType?.label || selectedProduct?.name || '—'}
+                {selectedProduct.name}
               </span>
-              {selectedProduct && <span className="text-xs text-gray-400 shrink-0">{quantity} × ₱{selectedProduct.price}</span>}
+              <span className="text-xs text-gray-400 shrink-0">{quantity} × ₱{selectedProduct.price}</span>
             </div>
-            {/* Apparel type badge */}
-            {apparelType && (
-              <div className="flex items-center gap-1.5 mt-1 mb-1">
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-gray-100 border border-gray-200 text-[10px] font-bold text-gray-600 uppercase tracking-wide">
-                  <ShirtIcon />
-                  {apparelType.category}
-                </span>
-              </div>
-            )}
+            {/* Product badge */}
+            <div className="flex items-center gap-1.5 mt-1 mb-1">
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-gray-100 border border-gray-200 text-[10px] font-bold text-gray-600 uppercase tracking-wide">
+                <ShirtIcon />
+                {selectedProduct.name}
+              </span>
+            </div>
             {/* Fabric badge */}
             {selectedFabric && (
               <div className="flex items-center gap-1.5 mt-1 mb-1">
@@ -566,12 +461,10 @@ const DesignPreview = ({ selectedProduct, apparelType, primary, accent, text, nu
                 </span>
               </div>
             )}
-            {selectedProduct && (
-              <div className="flex justify-between items-center mt-2 pt-2 border-t border-gray-100">
-                <span className="text-xs text-gray-500 uppercase tracking-wider font-bold">Est. Total</span>
-                <span className="text-2xl font-black text-[#111]">₱{(selectedProduct.price * quantity).toFixed(2)}</span>
-              </div>
-            )}
+            <div className="flex justify-between items-center mt-2 pt-2 border-t border-gray-100">
+              <span className="text-xs text-gray-500 uppercase tracking-wider font-bold">Est. Total</span>
+              <span className="text-2xl font-black text-[#111]">₱{(selectedProduct.price * quantity).toFixed(2)}</span>
+            </div>
           </>
         ) : (
           <p className="text-xs text-gray-300 text-center">No product selected</p>
@@ -602,9 +495,6 @@ export default function CustomizePage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showReview, setShowReview] = useState(false);
 
-  // Apparel type (new)
-  const [apparelType, setApparelType] = useState(null);
-
   // Colors
   const [primaryColor, setPrimaryColor] = useState('#ffffff');
   const [accentColor, setAccentColor] = useState('#f5e6a3');
@@ -613,7 +503,7 @@ export default function CustomizePage() {
   const [color3, setColor3] = useState('#ffffff');
   const [quantity, setQuantity] = useState(1);
 
-  // Fabric (now object)
+  // Fabric
   const [fabricType, setFabricType] = useState(null);
 
   // Text
@@ -676,6 +566,12 @@ export default function CustomizePage() {
     setLogoPreview(compressed);
   };
 
+  // ── Handle product selection — auto-sets apparel type from product name ──────
+  const handleProductSelect = (e) => {
+    const product = products.find(p => p.id === e.target.value) || null;
+    setSelectedProduct(product);
+  };
+
   const goToStep = (step) => {
     setCompletedSteps(prev => prev.includes(currentStep) ? prev : [...prev, currentStep]);
     setCurrentStep(step);
@@ -683,7 +579,7 @@ export default function CustomizePage() {
 
   const nextStep = () => {
     if (currentStep === 1) {
-      if (!apparelType) { toast.error('Please select an apparel type'); return; }
+      if (!selectedProduct) { toast.error('Please select a product'); return; }
       if (!fabricType) { toast.error('Please select a fabric type'); return; }
     }
     if (currentStep === 4) { handleShowReview(); return; }
@@ -718,8 +614,8 @@ export default function CustomizePage() {
           ? [{ productId: selectedProduct.id, productName: selectedProduct.name, quantity: parseInt(quantity), price: selectedProduct.price }]
           : [],
         customizationDetails: {
-          apparelType: apparelType?.label || null,
-          apparelCategory: apparelType?.category || null,
+          apparelType: selectedProduct?.name || null,
+          apparelCategory: selectedProduct?.category || null,
           primaryColor, accentColor,
           additionalColors: { color1, color2, color3 },
           fabricType: fabricType?.id || null,
@@ -764,15 +660,14 @@ export default function CustomizePage() {
 
           <div className="mb-8">
             {[
-              ['Apparel Type', apparelType
-                ? <span key="at" className="flex justify-end items-center gap-2">
+              ['Product', selectedProduct
+                ? <span key="prod" className="flex justify-end items-center gap-2">
                     <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-gray-100 border border-gray-200 text-[10px] font-bold text-gray-600 uppercase">
-                      <ShirtIcon />{apparelType.label}
+                      <ShirtIcon />{selectedProduct.name}
                     </span>
                   </span>
-                : <span key="at-none" className="text-gray-400">Not selected</span>
+                : <span key="prod-none" className="text-gray-400">Not selected</span>
               ],
-              ['Product', selectedProduct?.name || <span className="text-gray-400">None</span>],
               ['Fabric Type', fabricType
                 ? <span key="fab" className="flex justify-end items-center gap-2">
                     <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-50 border border-blue-100 text-[10px] font-bold text-blue-600 uppercase">
@@ -848,19 +743,30 @@ export default function CustomizePage() {
                 <div className="space-y-5">
                   <h2 className="text-base font-black text-[#111] uppercase tracking-wide">Colors & Quantity</h2>
 
-                  {/* ── Apparel Type Dropdown ── */}
-                  <ProductTypeSelector value={apparelType} onChange={setApparelType} />
-
-                  {/* ── Product (from DB) ── */}
+                  {/* ── Combined Product / Apparel Type ── */}
                   <div>
                     <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-2">
-                      Pricing Product <span className="text-gray-300 font-normal normal-case tracking-normal">(optional — for price estimation)</span>
+                      Product / Apparel Type *
                     </label>
-                    <select value={selectedProduct?.id || ''} onChange={(e) => setSelectedProduct(products.find(p => p.id === e.target.value) || null)}
-                      className="w-full px-3 py-2.5 border border-gray-200 text-sm text-[#111] bg-white focus:outline-none focus:border-[#111]">
+                    <select
+                      value={selectedProduct?.id || ''}
+                      onChange={handleProductSelect}
+                      className="w-full px-3 py-2.5 border border-gray-200 text-sm text-[#111] bg-white focus:outline-none focus:border-[#111]"
+                    >
                       <option value="">Choose a product...</option>
-                      {products.map(p => <option key={p.id} value={p.id}>{p.name} — ₱{p.price}</option>)}
+                      {products.map(p => (
+                        <option key={p.id} value={p.id}>{p.name} — ₱{p.price}</option>
+                      ))}
                     </select>
+                    {selectedProduct && (
+                      <div className="mt-2 flex items-center gap-1.5">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-gray-100 border border-gray-200 text-[10px] font-bold text-gray-600 uppercase tracking-wide">
+                          <ShirtIcon />
+                          {selectedProduct.name}
+                        </span>
+                        <span className="text-[10px] text-gray-400 font-medium">₱{selectedProduct.price} / unit</span>
+                      </div>
+                    )}
                   </div>
 
                   {/* ── Fabric Dropdown ── */}
@@ -1047,7 +953,6 @@ export default function CustomizePage() {
           <div className="flex-1 min-w-0">
             <DesignPreview
               selectedProduct={selectedProduct}
-              apparelType={apparelType}
               primary={primaryColor}
               accent={accentColor}
               text={customText}
