@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import apiClient from '../utils/apiClient';
 import { useChatStore } from '../store/chatStore';
 import OrderDetailsModal from '../components/OrderDetailsModal';
@@ -26,7 +26,7 @@ const NEXT_STATUS = {
   'pending':         'pending-payment',
   'pending-payment': 'paid',
   'paid':            'in-production',
-  'in-production':   null, // branches: for-shipping (shipping) or completed (pickup)
+  'in-production':   null,
   'for-shipping':    'completed',
 };
 
@@ -59,6 +59,311 @@ const CheckIcon = () => (
     <polyline points="2,6 5,9 10,3" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
   </svg>
 );
+const PrintIcon = () => (
+  <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M6 14h12v8H6z"/>
+  </svg>
+);
+
+/* ─────────────────────────────────────────
+   ORDER SHEET MODAL
+   Matches the Cheffies-style printable doc
+───────────────────────────────────────── */
+function OrderSheetModal({ order, isOpen, onClose }) {
+  const sheetRef = useRef(null);
+
+  if (!isOpen || !order) return null;
+
+  // Derive deadline: 3 days from createdAt, or fallback to order.deadline
+  const getDeadline = () => {
+    if (order.deadline) return order.deadline;
+    try {
+      let d;
+      if (typeof order.createdAt?.toDate === 'function') d = order.createdAt.toDate();
+      else if (order.createdAt?.seconds) d = new Date(order.createdAt.seconds * 1000);
+      else d = new Date(order.createdAt);
+      d.setDate(d.getDate() + 3);
+      return d.toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
+    } catch { return 'TBD'; }
+  };
+
+  // Build player rows from order items
+  const playerRows = order.items?.map(item => ({
+    name: item.playerName || item.productName || '—',
+    number: item.jerseyNumber ?? item.number ?? '—',
+    size: item.size || item.variant || '—',
+    note: item.note || item.ribbing || '',
+  })) || [];
+
+  // Jersey colors from customization or defaults
+  const primaryColor   = order.customizationDetails?.primaryColor   || '#F5C518';
+  const secondaryColor = order.customizationDetails?.secondaryColor  ||
+                         order.customizationDetails?.accentColor     || '#2B8FD6';
+
+  const teamName  = order.teamName  || order.customerName || 'Team Name';
+  const fabricType = order.fabricType || order.productType  || 'Sando: Regular Cut';
+  const deadline  = getDeadline();
+
+  // Large sizes that get a highlight
+  const largeSizes = new Set(['3XL', '4XL', '5XL', 'XXXL', 'XXXXL']);
+
+  const handlePrint = () => {
+    const content = sheetRef.current?.innerHTML;
+    if (!content) return;
+    const win = window.open('', '_blank');
+    win.document.write(`
+      <!DOCTYPE html><html><head>
+        <title>Order Sheet – ${teamName}</title>
+        <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+        <style>
+          * { box-sizing: border-box; margin: 0; padding: 0; }
+          body { font-family: 'Barlow', sans-serif; background: #fff; padding: 32px; max-width: 680px; margin: 0 auto; }
+          @media print { body { padding: 0; } }
+        </style>
+      </head><body>${content}</body></html>
+    `);
+    win.document.close();
+    win.focus();
+    setTimeout(() => { win.print(); win.close(); }, 400);
+  };
+
+  return (
+    <div
+      style={{
+        position: 'fixed', inset: 0, zIndex: 60,
+        background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(4px)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        padding: '24px',
+      }}
+      onClick={e => e.target === e.currentTarget && onClose()}
+    >
+      <div style={{
+        background: '#fff', borderRadius: '16px',
+        width: '100%', maxWidth: '700px', maxHeight: '90vh',
+        overflow: 'auto', boxShadow: '0 32px 80px rgba(0,0,0,0.3)',
+        display: 'flex', flexDirection: 'column',
+      }}>
+        {/* Modal toolbar */}
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          padding: '14px 20px', borderBottom: '1px solid #f0f0f0',
+          background: '#fafafa', borderRadius: '16px 16px 0 0',
+          flexShrink: 0,
+        }}>
+          <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#555', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
+            Order Sheet
+          </span>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button
+              onClick={handlePrint}
+              style={{
+                display: 'flex', alignItems: 'center', gap: '6px',
+                padding: '7px 14px', background: '#111', color: '#fff',
+                border: 'none', borderRadius: '8px', fontSize: '0.72rem',
+                fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase',
+                cursor: 'pointer',
+              }}
+            >
+              <PrintIcon /> Print / Save PDF
+            </button>
+            <button
+              onClick={onClose}
+              style={{
+                width: '32px', height: '32px', borderRadius: '8px',
+                border: '1px solid #e5e7eb', background: 'none',
+                cursor: 'pointer', fontSize: '1rem', color: '#888',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+
+        {/* Sheet content */}
+        <div ref={sheetRef} style={{ padding: '32px 36px', fontFamily: "'Barlow', sans-serif" }}>
+
+          {/* Deadline watermark (rotated, left side) */}
+          <div style={{ position: 'relative' }}>
+            <div style={{
+              position: 'absolute', left: '-28px', top: '60px',
+              transform: 'rotate(-90deg)', transformOrigin: 'left center',
+              fontSize: '11px', fontWeight: 600, color: '#888',
+              whiteSpace: 'nowrap', letterSpacing: '0.04em',
+              fontFamily: "'Barlow', sans-serif",
+            }}>
+              DEADLINE: {deadline.toUpperCase()} (12PM)
+            </div>
+
+            {/* Header */}
+            <div style={{ textAlign: 'center', marginBottom: '6px', paddingLeft: '16px' }}>
+              <h1 style={{
+                fontFamily: "'Barlow Condensed', sans-serif",
+                fontSize: '32px', fontWeight: 900, color: '#CC1111',
+                letterSpacing: '2px', textTransform: 'uppercase', margin: 0,
+              }}>
+                {teamName}
+              </h1>
+              <h2 style={{
+                fontFamily: "'Barlow Condensed', sans-serif",
+                fontSize: '14px', fontWeight: 700, color: '#CC1111',
+                letterSpacing: '1.5px', textTransform: 'uppercase',
+                marginTop: '4px', marginBottom: 0,
+              }}>
+                {fabricType}
+              </h2>
+            </div>
+
+            {/* Player table */}
+            <div style={{ marginTop: '20px', paddingLeft: '16px' }}>
+              <table style={{
+                width: '100%', borderCollapse: 'collapse',
+                fontSize: '13px', fontFamily: "'Barlow', sans-serif",
+              }}>
+                <thead>
+                  <tr style={{ background: '#f4f4f4' }}>
+                    {['NAME', '#', 'SIZE', 'NOTE'].map(h => (
+                      <th key={h} style={{
+                        border: '1px solid #ccc', padding: '7px 12px',
+                        fontFamily: "'Barlow Condensed', sans-serif",
+                        fontWeight: 700, fontSize: '11px', letterSpacing: '1px',
+                        textAlign: h === 'NAME' ? 'left' : 'center', color: '#333',
+                      }}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {playerRows.length > 0 ? playerRows.map((row, i) => {
+                    const isLarge = largeSizes.has(String(row.size).toUpperCase());
+                    return (
+                      <tr key={i} style={{ background: i % 2 === 0 ? '#fff' : '#fafafa' }}>
+                        <td style={{ border: '1px solid #ddd', padding: '7px 12px', fontWeight: 600, color: '#222' }}>
+                          {row.name}
+                        </td>
+                        <td style={{ border: '1px solid #ddd', padding: '7px 12px', textAlign: 'center', color: '#444' }}>
+                          {row.number}
+                        </td>
+                        <td style={{ border: '1px solid #ddd', padding: '7px 12px', textAlign: 'center' }}>
+                          <span style={{
+                            display: 'inline-block',
+                            background: isLarge ? '#FF69B4' : 'transparent',
+                            color: isLarge ? '#fff' : '#333',
+                            fontWeight: isLarge ? 700 : 500,
+                            padding: isLarge ? '2px 10px' : '0',
+                            borderRadius: isLarge ? '4px' : '0',
+                            fontSize: '12px',
+                            fontFamily: "'Barlow Condensed', sans-serif",
+                            letterSpacing: '0.5px',
+                          }}>
+                            {row.size}
+                          </span>
+                        </td>
+                        <td style={{ border: '1px solid #ddd', padding: '7px 12px', textAlign: 'center', fontSize: '12px', color: '#555', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                          {row.note}
+                        </td>
+                      </tr>
+                    );
+                  }) : (
+                    <tr>
+                      <td colSpan={4} style={{ border: '1px solid #ddd', padding: '20px', textAlign: 'center', color: '#bbb', fontSize: '12px' }}>
+                        No items in this order
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Jersey preview */}
+            <div style={{ marginTop: '28px', paddingLeft: '16px', display: 'flex', justifyContent: 'center' }}>
+              <svg width="340" height="200" viewBox="0 0 340 200" xmlns="http://www.w3.org/2000/svg">
+                {/* Left jersey (primary color) */}
+                <g transform="translate(20, 10)">
+                  {/* Body */}
+                  <path d="M30 20 L5 50 L25 58 L25 170 L115 170 L115 58 L135 50 L110 20 L90 28 C80 34 60 34 50 28 Z"
+                    fill={primaryColor} stroke="rgba(0,0,0,0.15)" strokeWidth="1"/>
+                  {/* Swoosh accent */}
+                  <path d="M25 120 Q55 80 115 170" fill="none" stroke={secondaryColor} strokeWidth="8" strokeLinecap="round" opacity="0.6"/>
+                  <path d="M25 140 Q60 95 115 170" fill="none" stroke={secondaryColor} strokeWidth="5" strokeLinecap="round" opacity="0.4"/>
+                  {/* Team name */}
+                  <text x="70" y="85" textAnchor="middle"
+                    fontFamily="'Barlow Condensed', sans-serif" fontSize="14" fontWeight="900"
+                    fill={secondaryColor} letterSpacing="1">
+                    {(teamName.split(' ')[0] || teamName).toUpperCase()}
+                  </text>
+                  {/* Number */}
+                  <text x="70" y="135" textAnchor="middle"
+                    fontFamily="'Barlow Condensed', sans-serif" fontSize="46" fontWeight="900"
+                    fill={secondaryColor}>
+                    {playerRows[0]?.number || '14'}
+                  </text>
+                </g>
+
+                {/* Divider line */}
+                <line x1="170" y1="10" x2="170" y2="185" stroke="#ccc" strokeWidth="1" strokeDasharray="4 3"/>
+
+                {/* Right jersey (secondary color) */}
+                <g transform="translate(175, 10)">
+                  <path d="M30 20 L5 50 L25 58 L25 170 L115 170 L115 58 L135 50 L110 20 L90 28 C80 34 60 34 50 28 Z"
+                    fill={secondaryColor} stroke="rgba(0,0,0,0.15)" strokeWidth="1"/>
+                  {/* Swoosh accent */}
+                  <path d="M115 120 Q85 80 25 170" fill="none" stroke={primaryColor} strokeWidth="8" strokeLinecap="round" opacity="0.6"/>
+                  <path d="M115 140 Q80 95 25 170" fill="none" stroke={primaryColor} strokeWidth="5" strokeLinecap="round" opacity="0.4"/>
+                  {/* Surname */}
+                  <text x="70" y="75" textAnchor="middle"
+                    fontFamily="'Barlow Condensed', sans-serif" fontSize="11" fontWeight="700"
+                    fill={primaryColor} letterSpacing="1">
+                    {(playerRows[0]?.name || 'SURNAME').toUpperCase()}
+                  </text>
+                  {/* Number */}
+                  <text x="70" y="135" textAnchor="middle"
+                    fontFamily="'Barlow Condensed', sans-serif" fontSize="46" fontWeight="900"
+                    fill={primaryColor}>
+                    {playerRows[0]?.number || '14'}
+                  </text>
+                </g>
+              </svg>
+            </div>
+
+            {/* Color swatches */}
+            <div style={{ paddingLeft: '16px', display: 'flex', alignItems: 'center', gap: '16px', marginTop: '12px', justifyContent: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <div style={{ width: '18px', height: '18px', borderRadius: '4px', background: primaryColor, border: '1px solid rgba(0,0,0,0.1)' }} />
+                <span style={{ fontSize: '11px', color: '#888', fontFamily: 'monospace' }}>{primaryColor}</span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <div style={{ width: '18px', height: '18px', borderRadius: '4px', background: secondaryColor, border: '1px solid rgba(0,0,0,0.1)' }} />
+                <span style={{ fontSize: '11px', color: '#888', fontFamily: 'monospace' }}>{secondaryColor}</span>
+              </div>
+            </div>
+
+            {/* Sign-off section */}
+            <div style={{
+              marginTop: '32px', paddingLeft: '16px',
+              borderTop: '1px solid #e5e7eb', paddingTop: '20px',
+              display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '12px',
+            }}>
+              {['Graphic Artist', 'Printer', 'Fabric Cutter', 'Heat Press', 'Sewer'].map(role => (
+                <div key={role} style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                  <span style={{
+                    fontFamily: "'Barlow Condensed', sans-serif",
+                    fontSize: '11px', fontWeight: 700,
+                    color: '#222', textTransform: 'uppercase', letterSpacing: '0.04em',
+                  }}>{role}:</span>
+                  <span style={{ fontSize: '11px', color: '#888', marginTop: '20px', borderTop: '0.5px solid #bbb', paddingTop: '3px' }}>
+                    Checked by:
+                  </span>
+                </div>
+              ))}
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 /* ─────────────────────────────────────────
    CLICKABLE PROGRESS TRACKER
@@ -67,7 +372,6 @@ function ProgressTracker({ order, onStatusUpdate, updatingStatus }) {
   const isPickup   = order.orderType === 'pickup';
   const isRejected = order.status === 'rejected';
 
-  // Hide for-shipping step for pickup orders
   const steps = isPickup
     ? STATUS_PIPELINE.filter(s => s.key !== 'for-shipping')
     : STATUS_PIPELINE;
@@ -109,10 +413,10 @@ function ProgressTracker({ order, onStatusUpdate, updatingStatus }) {
                   title={isClickable ? `Advance to "${step.label}"` : step.label}
                   className={[
                     'w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-200 border-2 relative select-none',
-                    isDone    ? 'bg-[#111] border-[#111] text-white'                                                                     : '',
-                    isCurrent ? 'border-[#111] bg-white text-[#111] shadow-[0_0_0_3px_rgba(17,17,17,0.1)]'                              : '',
+                    isDone    ? 'bg-[#111] border-[#111] text-white' : '',
+                    isCurrent ? 'border-[#111] bg-white text-[#111] shadow-[0_0_0_3px_rgba(17,17,17,0.1)]' : '',
                     isNext    ? 'border-dashed border-[#111] bg-white text-[#555] cursor-pointer hover:bg-[#111] hover:text-white hover:scale-110 hover:shadow-lg' : '',
-                    isFuture  ? 'border-[#e5e7eb] bg-white text-[#ccc] cursor-default'                                                   : '',
+                    isFuture  ? 'border-[#e5e7eb] bg-white text-[#ccc] cursor-default' : '',
                   ].join(' ')}
                 >
                   {isDone ? <CheckIcon /> : <span className="text-[0.7rem]">{step.icon}</span>}
@@ -122,15 +426,14 @@ function ProgressTracker({ order, onStatusUpdate, updatingStatus }) {
                 </button>
                 <span className={[
                   'text-[0.58rem] text-center leading-tight w-14 transition-colors',
-                  isDone    ? 'text-[#888]'              : '',
-                  isCurrent ? 'text-[#111] font-bold'    : '',
-                  isNext    ? 'text-[#444] font-semibold': '',
-                  isFuture  ? 'text-[#ccc]'              : '',
+                  isDone    ? 'text-[#888]'               : '',
+                  isCurrent ? 'text-[#111] font-bold'     : '',
+                  isNext    ? 'text-[#444] font-semibold' : '',
+                  isFuture  ? 'text-[#ccc]'               : '',
                 ].join(' ')}>
                   {step.short}
                 </span>
               </div>
-
               {i < steps.length - 1 && (
                 <div className={`flex-1 h-[2px] mb-5 mx-0.5 transition-colors duration-300 ${i < currentIdx ? 'bg-[#111]' : 'bg-[#e5e7eb]'}`} />
               )}
@@ -138,7 +441,6 @@ function ProgressTracker({ order, onStatusUpdate, updatingStatus }) {
           );
         })}
       </div>
-
       {nextAllowed && (
         <p className="text-[0.62rem] text-[#999] mt-0.5 pl-0.5">
           ↑ Click <strong className="text-[#111]">{STATUS_MAP[nextAllowed]?.label}</strong> node to advance
@@ -151,7 +453,7 @@ function ProgressTracker({ order, onStatusUpdate, updatingStatus }) {
 /* ─────────────────────────────────────────
    ORDER CARD
 ───────────────────────────────────────── */
-function OrderCard({ order, onStatusUpdate, updatingStatus, onOpenDetail, onOpenChat }) {
+function OrderCard({ order, onStatusUpdate, updatingStatus, onOpenDetail, onOpenChat, onOpenSheet }) {
   const [expanded, setExpanded] = useState(false);
   const statusCfg = STATUS_MAP[order.status] || STATUS_MAP['pending'];
   const isPickup  = order.orderType === 'pickup';
@@ -171,7 +473,6 @@ function OrderCard({ order, onStatusUpdate, updatingStatus, onOpenDetail, onOpen
     <div className={`bg-white rounded-2xl border overflow-hidden transition-all duration-200
       ${expanded ? 'border-[#111] shadow-[0_8px_32px_rgba(0,0,0,0.1)]' : 'border-[#e5e7eb] hover:border-[#bbb] hover:shadow-md'}
     `}>
-      {/* Top color accent */}
       <div className="h-[3px]" style={{ backgroundColor: statusCfg.color }} />
 
       <div className="p-5">
@@ -219,6 +520,16 @@ function OrderCard({ order, onStatusUpdate, updatingStatus, onOpenDetail, onOpen
               className="px-3 py-1.5 bg-[#111] text-white text-[0.65rem] font-bold uppercase tracking-wider rounded-lg hover:bg-[#333] transition-colors">
               Details
             </button>
+
+            {/* NEW: Order Sheet button */}
+            <button
+              onClick={() => onOpenSheet(order)}
+              title="View printable order sheet"
+              className="px-3 py-1.5 border border-[#ddd] text-[#555] text-[0.65rem] font-bold uppercase tracking-wider rounded-lg hover:bg-[#f5f5f5] transition-colors flex items-center gap-1"
+            >
+              <PrintIcon /> Sheet
+            </button>
+
             <button onClick={() => onOpenChat(order.id, order.status)}
               className="px-3 py-1.5 border border-[#ddd] text-[#555] text-[0.65rem] font-bold uppercase tracking-wider rounded-lg hover:bg-[#f5f5f5] transition-colors flex items-center gap-1">
               <ChatIcon /> Chat
@@ -312,6 +623,14 @@ function OrderCard({ order, onStatusUpdate, updatingStatus, onOpenDetail, onOpen
                 ✕ Reject Order
               </button>
             )}
+
+            {/* Quick sheet preview inside expanded card */}
+            <button
+              onClick={() => onOpenSheet(order)}
+              className="w-full py-2 text-[0.75rem] font-bold text-[#555] border border-[#e5e7eb] rounded-xl hover:bg-[#fafafa] transition-colors flex items-center justify-center gap-2"
+            >
+              <PrintIcon /> View / Print Order Sheet
+            </button>
           </div>
         )}
       </div>
@@ -345,6 +664,8 @@ export default function AdminOrders() {
   const [loading, setLoading]                       = useState(true);
   const [selectedOrder, setSelectedOrder]           = useState(null);
   const [showModal, setShowModal]                   = useState(false);
+  const [showSheet, setShowSheet]                   = useState(false);   // NEW
+  const [sheetOrder, setSheetOrder]                 = useState(null);    // NEW
   const [updatingStatus, setUpdatingStatus]         = useState(false);
   const [expandHistory, setExpandHistory]           = useState(false);
   const [searchQuery, setSearchQuery]               = useState('');
@@ -391,6 +712,12 @@ export default function AdminOrders() {
   const handleMarkForShipping = (id) => handleStatusUpdate(id, 'for-shipping');
   const handleComplete        = (id) => handleStatusUpdate(id, 'completed');
 
+  // NEW: open sheet handler
+  const handleOpenSheet = (order) => {
+    setSheetOrder(order);
+    setShowSheet(true);
+  };
+
   const activeOrders    = orders.filter(o => !['completed', 'rejected'].includes(o.status));
   const completedOrders = orders.filter(o => o.status === 'completed');
   const rejectedOrders  = orders.filter(o => o.status === 'rejected');
@@ -414,7 +741,7 @@ export default function AdminOrders() {
   return (
     <div className="min-h-screen bg-[#f8f8f6]">
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Syne:wght@700;800&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@400;500;600&display=swap');
         .animate-in { animation: fadeSlide 0.2s ease forwards; }
         @keyframes fadeSlide { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
       `}</style>
@@ -425,7 +752,7 @@ export default function AdminOrders() {
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 style={{ fontFamily: "'Syne', sans-serif" }}
-              className="font-['Syne',serif] text-[3.5rem] font-extrabold text-[#111] tracking-tight leading-none">
+              className="text-[3.5rem] font-extrabold text-[#111] tracking-tight leading-none">
               Order Management
             </h1>
             <p className="text-[0.75rem] text-[#bbb] mt-1.5 tracking-wide">
@@ -440,10 +767,10 @@ export default function AdminOrders() {
 
         {/* ── Stats ── */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">
-          <StatCard label="Active"       count={activeOrders.length}                                   color="#111111" icon="📋" />
+          <StatCard label="Active"        count={activeOrders.length}                                    color="#111111" icon="📋" />
           <StatCard label="In Production" count={orders.filter(o => o.status === 'in-production').length} color="#8b5cf6" icon="⚙️" />
-          <StatCard label="For Shipping" count={orders.filter(o => o.status === 'for-shipping').length}   color="#06b6d4" icon="📦" />
-          <StatCard label="Completed"    count={completedOrders.length}                                color="#10b981" icon="🎉" />
+          <StatCard label="For Shipping"  count={orders.filter(o => o.status === 'for-shipping').length}  color="#06b6d4" icon="📦" />
+          <StatCard label="Completed"     count={completedOrders.length}                                 color="#10b981" icon="🎉" />
         </div>
 
         {/* ── Search + Filter ── */}
@@ -494,6 +821,7 @@ export default function AdminOrders() {
                 updatingStatus={updatingStatus}
                 onOpenDetail={(o) => { setSelectedOrder(o); setShowModal(true); }}
                 onOpenChat={openChat}
+                onOpenSheet={handleOpenSheet}
               />
             ))}
           </div>
@@ -544,6 +872,12 @@ export default function AdminOrders() {
                           {cfg?.label}
                         </span>
                         <button
+                          onClick={() => handleOpenSheet(order)}
+                          className="text-[0.7rem] font-bold text-[#555] border border-[#e5e7eb] px-3 py-1 rounded-lg hover:bg-[#f5f5f5] transition-colors flex items-center gap-1"
+                        >
+                          <PrintIcon /> Sheet
+                        </button>
+                        <button
                           onClick={() => { setSelectedOrder(order); setShowModal(true); }}
                           className="text-[0.7rem] font-bold text-[#555] border border-[#e5e7eb] px-3 py-1 rounded-lg hover:bg-[#f5f5f5] transition-colors"
                         >
@@ -572,6 +906,13 @@ export default function AdminOrders() {
         onComplete={handleComplete}
         onOpenChat={openChat}
         updatingStatus={updatingStatus}
+      />
+
+      {/* ── Order Sheet Modal (NEW) ── */}
+      <OrderSheetModal
+        order={sheetOrder}
+        isOpen={showSheet}
+        onClose={() => { setShowSheet(false); setSheetOrder(null); }}
       />
     </div>
   );
