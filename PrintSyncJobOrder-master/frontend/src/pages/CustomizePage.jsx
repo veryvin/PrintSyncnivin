@@ -5,6 +5,7 @@ import apiClient from '../utils/apiClient';
 import toast from 'react-hot-toast';
 
 const DEPOSIT_AMOUNT = 500;
+const SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL'];
 
 // ── Fabric Types ───────────────────────────────────────────────────────────────
 const FABRIC_TYPES = [
@@ -73,6 +74,473 @@ const ShirtIcon = () => (
     <path strokeLinecap="round" strokeLinejoin="round" d="M20.38 3.46L16 2a4 4 0 01-8 0L3.62 3.46a2 2 0 00-1.34 2.23l.58 3.57a1 1 0 00.99.84H6v10a2 2 0 002 2h8a2 2 0 002-2V10h2.15a1 1 0 00.99-.84l.58-3.57a2 2 0 00-1.34-2.23z" />
   </svg>
 );
+const UsersIcon = () => (
+  <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zM23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" />
+  </svg>
+);
+const TrashIcon = () => (
+  <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" d="M3 6h18M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6M10 11v6M14 11v6M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2" />
+  </svg>
+);
+const PlusIcon = () => (
+  <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" d="M12 5v14M5 12h14" />
+  </svg>
+);
+const DownloadIcon = () => (
+  <svg width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3" />
+  </svg>
+);
+
+// ══════════════════════════════════════════════════════════════════════════════
+// ── JOB ORDER PDF GENERATOR (browser-side, no backend needed) ─────────────────
+// ══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Dynamically loads jsPDF from CDN (only once), then generates and
+ * downloads a printable job order PDF that mirrors the physical sheet
+ * in the photo: team name header, apparel/fabric row, player lineup
+ * table with pink-highlighted oversized sizes, jersey color swatches,
+ * layout notes, pricing summary, and production sign-off bar.
+ */
+const loadJsPDF = () =>
+  new Promise((resolve, reject) => {
+    if (window.jspdf) return resolve(window.jspdf.jsPDF);
+    const script = document.createElement('script');
+    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+    script.onload = () => resolve(window.jspdf.jsPDF);
+    script.onerror = reject;
+    document.head.appendChild(script);
+  });
+
+const hexToRgb = (hex) => {
+  const h = hex.replace('#', '');
+  return [
+    parseInt(h.substring(0, 2), 16),
+    parseInt(h.substring(2, 4), 16),
+    parseInt(h.substring(4, 6), 16),
+  ];
+};
+
+/**
+ * Draws a simplified jersey silhouette on the jsPDF canvas.
+ * @param {object} doc  - jsPDF instance
+ * @param {number} x    - left edge in mm
+ * @param {number} y    - top edge in mm
+ * @param {number} w    - width in mm
+ * @param {number} h    - height in mm
+ * @param {string} primary  - hex color
+ * @param {string} accent   - hex color
+ * @param {string} label    - text on chest (team name or "SURNAME")
+ * @param {string} number   - jersey number string
+ * @param {boolean} isBack
+ */
+const drawJerseyOnPDF = (doc, x, y, w, h, primary, accent, label, number, isBack = false) => {
+  const pr = hexToRgb(primary);
+  const ac = hexToRgb(accent);
+
+  // Scale helpers — base design space is 100×120 units
+  const sx = w / 100;
+  const sy = h / 120;
+  const px = (u) => x + u * sx;
+  const py = (u) => y + u * sy;
+
+  // ── Body ──
+  doc.setFillColor(...pr);
+  doc.setDrawColor(...ac);
+  doc.setLineWidth(0.4);
+  doc.roundedRect(px(25), py(28), px(50) - px(25), py(100) - py(28), 1, 1, 'FD');
+
+  // ── Left sleeve ──
+  doc.setFillColor(...pr);
+  doc.triangle(px(25), py(28), px(5), py(20), px(8), py(50), 'FD');
+
+  // ── Right sleeve ──
+  doc.triangle(px(75), py(28), px(95), py(20), px(92), py(50), 'FD');
+
+  // ── Collar ──
+  doc.setFillColor(...ac);
+  doc.setDrawColor(...ac);
+  if (!isBack) {
+    // V-neck front
+    doc.triangle(px(38), py(28), px(62), py(28), px(50), py(38), 'F');
+  } else {
+    // Round back collar
+    doc.ellipse(px(50), py(28), px(14) - px(0), py(5) - py(0), 'F');
+  }
+
+  // ── Side accent stripes ──
+  doc.setFillColor(...ac);
+  doc.setGState(doc.GState({ opacity: 0.45 }));
+  doc.rect(px(25), py(42), px(4.5) - px(0), py(58) - py(0), 'F');
+  doc.rect(px(70.5), py(42), px(4.5) - px(0), py(58) - py(0), 'F');
+  doc.setGState(doc.GState({ opacity: 1 }));
+
+  // ── Bottom hem accent ──
+  doc.setFillColor(...ac);
+  doc.setGState(doc.GState({ opacity: 0.5 }));
+  doc.rect(px(25), py(97), px(50) - px(25), py(3) - py(0), 'F');
+  doc.setGState(doc.GState({ opacity: 1 }));
+
+  // ── Jersey number ──
+  doc.setTextColor(...ac);
+  doc.setFont('helvetica', 'bold');
+  const numSize = Math.round(22 * sx);
+  doc.setFontSize(numSize);
+  doc.text(number || '00', px(50), py(85), { align: 'center' });
+
+  // ── Label text (team name or SURNAME) ──
+  const lblSize = Math.round(6 * sx);
+  doc.setFontSize(Math.max(5, lblSize));
+  if (isBack) {
+    doc.text((label || 'SURNAME').toUpperCase(), px(50), py(56), { align: 'center' });
+  } else {
+    doc.text((label || 'TEAM').toUpperCase(), px(50), py(60), { align: 'center' });
+  }
+};
+
+/**
+ * Main PDF generation function.
+ * Call this after order is placed, passing the full order state.
+ */
+const generateJobOrderPDF = async ({
+  orderId,
+  teamName,
+  selectedProduct,
+  fabricType,
+  primaryColor,
+  accentColor,
+  color1, color2, color3,
+  customText,
+  jerseyNumber,
+  fontFamily,
+  jerseyLayoutComments,
+  logoPreview,
+  quantity,
+  filledLineup,
+  phoneNumber,
+  orderType,
+  customerName,
+  totalPrice,
+  orderDate,
+  deadline,
+}) => {
+  const JsPDF = await loadJsPDF();
+  const doc = new JsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+
+  const PW = 210; // A4 width mm
+  const PH = 297; // A4 height mm
+  const M = 14;   // margin
+
+  // ── HEADER BAR ──────────────────────────────────────────────────────────────
+  doc.setFillColor(220, 50, 30);
+  doc.rect(0, 0, PW, 22, 'F');
+
+  doc.setTextColor(255, 255, 255);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(16);
+  doc.text(`${(teamName || customText || 'TEAM').toUpperCase()} — JOB ORDER`, PW / 2, 10, { align: 'center' });
+
+  doc.setFontSize(8);
+  const apparelLabel = `${selectedProduct?.name?.toUpperCase() || 'APPAREL'}  •  ${fabricType?.name?.toUpperCase() || ''}`;
+  doc.text(apparelLabel, PW / 2, 17, { align: 'center' });
+
+  // ── META STRIP ──────────────────────────────────────────────────────────────
+  doc.setFillColor(20, 20, 20);
+  doc.rect(0, 22, PW, 10, 'F');
+
+  doc.setTextColor(200, 200, 200);
+  doc.setFontSize(7);
+  doc.setFont('helvetica', 'normal');
+  doc.text(`ORDER: ${orderId || '—'}`, M, 28.5);
+  doc.text(`DATE: ${orderDate || new Date().toLocaleDateString('en-PH')}`, PW / 2, 28.5, { align: 'center' });
+  doc.text(`DEADLINE: ${deadline || '—'}`, PW - M, 28.5, { align: 'right' });
+
+  // ── SECTION: COLOR SWATCHES + ORDER INFO ────────────────────────────────────
+  let curY = 37;
+
+  // Color swatches row
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(6.5);
+  doc.setTextColor(100, 100, 100);
+  doc.text('PRIMARY COLOR', M, curY);
+  doc.text('ACCENT COLOR', M + 38, curY);
+  doc.text('ADD. COLORS', M + 76, curY);
+
+  curY += 2;
+  // Primary swatch
+  const pr = hexToRgb(primaryColor || '#ffffff');
+  doc.setFillColor(...pr);
+  doc.setDrawColor(180, 180, 180);
+  doc.setLineWidth(0.3);
+  doc.roundedRect(M, curY, 28, 7, 1, 1, 'FD');
+  doc.setTextColor(80, 80, 80);
+  doc.setFontSize(5.5);
+  doc.setFont('helvetica', 'normal');
+  doc.text((primaryColor || '#ffffff').toUpperCase(), M + 1, curY + 10);
+
+  // Accent swatch
+  const ac = hexToRgb(accentColor || '#000000');
+  doc.setFillColor(...ac);
+  doc.roundedRect(M + 38, curY, 28, 7, 1, 1, 'FD');
+  doc.text((accentColor || '#000000').toUpperCase(), M + 39, curY + 10);
+
+  // Additional color dots
+  [[color1, 0], [color2, 9], [color3, 18]].forEach(([col, offset]) => {
+    if (col && col !== '#ffffff') {
+      doc.setFillColor(...hexToRgb(col));
+      doc.setDrawColor(180, 180, 180);
+      doc.circle(M + 79 + offset, curY + 3.5, 3.5, 'FD');
+    } else {
+      doc.setFillColor(235, 235, 235);
+      doc.setDrawColor(180, 180, 180);
+      doc.circle(M + 79 + offset, curY + 3.5, 3.5, 'FD');
+    }
+  });
+
+  // Right side info pills
+  const infoItems = [
+    ['CUSTOMER', customerName || '—'],
+    ['PHONE', phoneNumber || '—'],
+    ['FONT', fontFamily || '—'],
+    ['ORDER TYPE', orderType === 'pickup' ? 'Pick Up' : 'Shipping'],
+    ['QTY', `${quantity} unit(s)`],
+  ];
+  const infoX = PW / 2 + 8;
+  const infoW = PW - M - infoX;
+  infoItems.forEach(([label, value], i) => {
+    const iy = curY + i * 8;
+    doc.setFillColor(240, 240, 240);
+    doc.roundedRect(infoX, iy - 1, infoW, 6.5, 1, 1, 'F');
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(6);
+    doc.setTextColor(120, 120, 120);
+    doc.text(label, infoX + 2, iy + 3.5);
+    doc.setTextColor(20, 20, 20);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(6.5);
+    doc.text(value, infoX + infoW - 2, iy + 3.5, { align: 'right' });
+  });
+
+  curY += 46;
+
+  // ── DIVIDER ─────────────────────────────────────────────────────────────────
+  doc.setDrawColor(220, 220, 220);
+  doc.setLineWidth(0.3);
+  doc.line(M, curY, PW - M, curY);
+  curY += 4;
+
+  // ── SECTION: PLAYER LINEUP TABLE ────────────────────────────────────────────
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(7.5);
+  doc.setTextColor(20, 20, 20);
+  doc.text('TEAM LINEUP', M, curY);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(6);
+  doc.setTextColor(130, 130, 130);
+  doc.text(`${filledLineup.length} player(s)  •  ${quantity} jersey(s) ordered`, M + 30, curY);
+  curY += 3;
+
+  // Table header
+  const colW = [10, 58, 24, 22, 52]; // #, Name, No., Size, Note
+  const colX = [M];
+  colW.slice(0, -1).forEach((w, i) => colX.push(colX[i] + w));
+  const rowH = 7.5;
+  const headers = ['#', 'SURNAME', 'NO.', 'SIZE', 'NOTE'];
+
+  doc.setFillColor(20, 20, 20);
+  doc.rect(M, curY, colW.reduce((a, b) => a + b), rowH, 'F');
+  doc.setTextColor(255, 255, 255);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(6.5);
+  headers.forEach((h, i) => {
+    doc.text(h, colX[i] + colW[i] / 2, curY + rowH / 2 + 1, { align: 'center' });
+  });
+  curY += rowH;
+
+  // Table rows
+  const tableLineup = filledLineup.length > 0 ? filledLineup : [];
+  tableLineup.forEach((player, idx) => {
+    const bg = idx % 2 === 0 ? [255, 255, 255] : [248, 248, 248];
+    doc.setFillColor(...bg);
+    doc.rect(M, curY, colW.reduce((a, b) => a + b), rowH, 'F');
+
+    // Grid lines
+    doc.setDrawColor(230, 230, 230);
+    doc.setLineWidth(0.2);
+    doc.rect(M, curY, colW.reduce((a, b) => a + b), rowH, 'S');
+
+    // Highlight oversized sizes
+    const size = player.size || '';
+    const isOversized = ['XXL', '3XL', '4XL', '5XL'].includes(size.toUpperCase());
+
+    const values = [
+      String(idx + 1),
+      (player.surname || '—').toUpperCase(),
+      player.jerseyNumber || '—',
+      size,
+      player.note || '',
+    ];
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(7);
+    values.forEach((val, i) => {
+      if (i === 3 && isOversized) {
+        // Pink highlight pill for oversized
+        doc.setFillColor(255, 100, 150);
+        doc.roundedRect(colX[i] + 1, curY + 1.5, colW[i] - 2, rowH - 3, 1, 1, 'F');
+        doc.setTextColor(255, 255, 255);
+      } else {
+        doc.setTextColor(30, 30, 30);
+      }
+      doc.text(val, colX[i] + colW[i] / 2, curY + rowH / 2 + 1.2, { align: 'center' });
+      doc.setTextColor(30, 30, 30);
+    });
+
+    curY += rowH;
+  });
+
+  if (tableLineup.length === 0) {
+    doc.setFillColor(250, 250, 250);
+    doc.rect(M, curY, colW.reduce((a, b) => a + b), rowH, 'F');
+    doc.setTextColor(180, 180, 180);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(6.5);
+    doc.text('No lineup provided — admin will confirm details', PW / 2, curY + rowH / 2 + 1, { align: 'center' });
+    curY += rowH;
+  }
+
+  curY += 5;
+
+  // ── SECTION: JERSEY PREVIEWS ─────────────────────────────────────────────────
+  const jerseyW = 46;
+  const jerseyH = 55;
+  const jerseyGap = 8;
+  const totalJerseysW = jerseyW * 2 + jerseyGap;
+  const jerseyStartX = (PW - totalJerseysW) / 2;
+
+  // Labels
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(6.5);
+  doc.setTextColor(120, 120, 120);
+  doc.text('FRONT', jerseyStartX + jerseyW / 2, curY, { align: 'center' });
+  doc.text('BACK', jerseyStartX + jerseyW + jerseyGap + jerseyW / 2, curY, { align: 'center' });
+  curY += 2;
+
+  // Draw both jerseys
+  const previewNumber = filledLineup[0]?.jerseyNumber || jerseyNumber || '00';
+  const previewLabel = customText || teamName || 'TEAM';
+  drawJerseyOnPDF(doc, jerseyStartX, curY, jerseyW, jerseyH, primaryColor || '#cccccc', accentColor || '#333333', previewLabel, previewNumber, false);
+  drawJerseyOnPDF(doc, jerseyStartX + jerseyW + jerseyGap, curY, jerseyW, jerseyH, primaryColor || '#cccccc', accentColor || '#333333', 'SURNAME', previewNumber, true);
+
+  curY += jerseyH + 6;
+
+  // ── LAYOUT NOTES ────────────────────────────────────────────────────────────
+  if (jerseyLayoutComments && jerseyLayoutComments.trim()) {
+    doc.setFillColor(255, 251, 230);
+    doc.setDrawColor(230, 190, 80);
+    doc.setLineWidth(0.4);
+    doc.roundedRect(M, curY, PW - 2 * M, 14, 1.5, 1.5, 'FD');
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(6.5);
+    doc.setTextColor(140, 100, 0);
+    doc.text('LAYOUT NOTES:', M + 3, curY + 5);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(60, 50, 10);
+    doc.setFontSize(7);
+    const noteLines = doc.splitTextToSize(jerseyLayoutComments, PW - 2 * M - 36);
+    doc.text(noteLines, M + 3, curY + 10);
+    curY += 18;
+  }
+
+  // ── PRICING SUMMARY ──────────────────────────────────────────────────────────
+  const halfW = (PW - 2 * M) / 2 - 3;
+  const priceBoxH = 22;
+
+  // Left: breakdown
+  doc.setFillColor(245, 245, 245);
+  doc.roundedRect(M, curY, halfW, priceBoxH, 1.5, 1.5, 'F');
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(7);
+  doc.setTextColor(80, 80, 80);
+  doc.text(`Unit Price:`, M + 3, curY + 6);
+  doc.text(`P${(selectedProduct?.price || 0).toLocaleString('en-PH', { minimumFractionDigits: 2 })}`, M + halfW - 3, curY + 6, { align: 'right' });
+  doc.text(`Quantity:`, M + 3, curY + 12);
+  doc.text(`${quantity}x`, M + halfW - 3, curY + 12, { align: 'right' });
+  doc.setDrawColor(210, 210, 210);
+  doc.setLineWidth(0.3);
+  doc.line(M + 2, curY + 14.5, M + halfW - 2, curY + 14.5);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(8);
+  doc.setTextColor(20, 20, 20);
+  doc.text('ORDER TOTAL:', M + 3, curY + 20);
+  doc.text(`P${parseFloat(totalPrice || 0).toLocaleString('en-PH', { minimumFractionDigits: 2 })}`, M + halfW - 3, curY + 20, { align: 'right' });
+
+  // Right: deposit box
+  const depX = M + halfW + 6;
+  doc.setFillColor(255, 237, 200);
+  doc.setDrawColor(220, 160, 40);
+  doc.setLineWidth(0.5);
+  doc.roundedRect(depX, curY, halfW, priceBoxH, 1.5, 1.5, 'FD');
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(6.5);
+  doc.setTextColor(140, 80, 0);
+  doc.text('DEPOSIT DUE NOW:', depX + 3, curY + 6);
+  doc.setFontSize(14);
+  doc.setTextColor(180, 80, 0);
+  doc.text(`P${DEPOSIT_AMOUNT.toLocaleString('en-PH', { minimumFractionDigits: 2 })}`, depX + 3, curY + 15);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(6);
+  doc.setTextColor(160, 100, 30);
+  const remaining = (parseFloat(totalPrice || 0) - DEPOSIT_AMOUNT);
+  doc.text(`Balance after deposit: P${remaining.toLocaleString('en-PH', { minimumFractionDigits: 2 })}`, depX + 3, curY + 20);
+
+  curY += priceBoxH + 5;
+
+  // ── PRODUCTION SIGN-OFF BAR ──────────────────────────────────────────────────
+  const signFields = ['Graphic Artist', 'Printer', 'Fabric Cutter', 'Heat Press', 'Sewer'];
+  const signBarH = 22;
+  const signY = PH - signBarH - 5;
+
+  doc.setFillColor(20, 20, 20);
+  doc.rect(0, signY, PW, signBarH + 5, 'F');
+
+  const fieldW = PW / signFields.length;
+  signFields.forEach((field, i) => {
+    const fx = i * fieldW;
+    // Divider lines
+    if (i > 0) {
+      doc.setDrawColor(60, 60, 60);
+      doc.setLineWidth(0.3);
+      doc.line(fx, signY + 2, fx, signY + signBarH + 2);
+    }
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(7);
+    doc.setTextColor(220, 220, 220);
+    doc.text(field, fx + fieldW / 2, signY + 8, { align: 'center' });
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(6);
+    doc.setTextColor(120, 120, 120);
+    doc.text('Checked by: ___________', fx + fieldW / 2, signY + 15, { align: 'center' });
+  });
+
+  // ── FOOTER NOTE ─────────────────────────────────────────────────────────────
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(5.5);
+  doc.setTextColor(160, 160, 160);
+  doc.text(
+    `Generated ${new Date().toLocaleString('en-PH')}  •  This is an internal production document.`,
+    PW / 2, signY - 3,
+    { align: 'center' }
+  );
+
+  // ── SAVE ────────────────────────────────────────────────────────────────────
+  const filename = `job-order-${(teamName || customText || 'order').replace(/\s+/g, '-').toLowerCase()}-${orderId || Date.now()}.pdf`;
+  doc.save(filename);
+};
 
 // ── Fabric Type Selector (Dropdown) ────────────────────────────────────────────
 const SearchableDropdown = ({ label, placeholder, value, onChange, options, renderOption, renderSelected, required }) => {
@@ -298,7 +766,8 @@ const StepIndicator = ({ currentStep, completedSteps }) => {
     { num: 1, label: 'Colors & Qty' },
     { num: 2, label: 'Text' },
     { num: 3, label: 'Logo' },
-    { num: 4, label: 'Details' },
+    { num: 4, label: 'Lineup' },
+    { num: 5, label: 'Details' },
   ];
   return (
     <div className="flex items-center gap-2 mb-6">
@@ -440,24 +909,18 @@ const DesignPreview = ({ selectedProduct, primary, accent, text, number, logo, q
         {selectedProduct ? (
           <>
             <div className="flex justify-between items-center mb-1">
-              <span className="text-xs text-gray-500 font-medium truncate pr-2">
-                {selectedProduct.name}
-              </span>
+              <span className="text-xs text-gray-500 font-medium truncate pr-2">{selectedProduct.name}</span>
               <span className="text-xs text-gray-400 shrink-0">{quantity} × ₱{selectedProduct.price}</span>
             </div>
-            {/* Product badge */}
             <div className="flex items-center gap-1.5 mt-1 mb-1">
               <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-gray-100 border border-gray-200 text-[10px] font-bold text-gray-600 uppercase tracking-wide">
-                <ShirtIcon />
-                {selectedProduct.name}
+                <ShirtIcon />{selectedProduct.name}
               </span>
             </div>
-            {/* Fabric badge */}
             {selectedFabric && (
               <div className="flex items-center gap-1.5 mt-1 mb-1">
                 <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-50 border border-blue-100 text-[10px] font-bold text-blue-600 uppercase tracking-wide">
-                  <FabricIcon />
-                  {selectedFabric.name}
+                  <FabricIcon />{selectedFabric.name}
                 </span>
               </div>
             )}
@@ -479,6 +942,121 @@ const DesignPreview = ({ selectedProduct, primary, accent, text, number, logo, q
   );
 };
 
+// ── Lineup Builder ─────────────────────────────────────────────────────────────
+const createEmptyPlayer = (index) => ({
+  id: `player-${Date.now()}-${index}`,
+  surname: '',
+  jerseyNumber: '',
+  size: 'M',
+});
+
+const LineupBuilder = ({ quantity, lineup, onChange }) => {
+  const handlePlayerChange = (index, field, value) => {
+    const updated = lineup.map((p, i) => i === index ? { ...p, [field]: value } : p);
+    onChange(updated);
+  };
+
+  const addPlayer = () => {
+    if (lineup.length >= 50) return;
+    onChange([...lineup, createEmptyPlayer(lineup.length)]);
+  };
+
+  const removePlayer = (index) => {
+    onChange(lineup.filter((_, i) => i !== index));
+  };
+
+  const filledCount = lineup.filter(p => p.surname.trim() && p.jerseyNumber.trim()).length;
+  const isComplete = filledCount === quantity;
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-3">
+        <div>
+          <h2 className="text-base font-black text-[#111] uppercase tracking-wide">Team Lineup</h2>
+          <p className="text-[10px] text-gray-400 mt-0.5">
+            {filledCount} of {quantity} {quantity === 1 ? 'jersey' : 'jerseys'} filled
+          </p>
+        </div>
+        <div className={`px-3 py-1 text-[10px] font-bold uppercase tracking-widest border
+          ${isComplete ? 'bg-green-50 border-green-200 text-green-700' : 'bg-amber-50 border-amber-200 text-amber-700'}`}>
+          {isComplete ? '✓ Complete' : `${quantity - filledCount} remaining`}
+        </div>
+      </div>
+
+      <div className="w-full h-1 bg-gray-100 mb-4 rounded-full overflow-hidden">
+        <div className="h-1 rounded-full transition-all duration-500"
+          style={{
+            width: quantity > 0 ? `${Math.min(100, (filledCount / quantity) * 100)}%` : '0%',
+            background: isComplete ? '#22c55e' : '#f59e0b',
+          }}
+        />
+      </div>
+
+      <div className="grid gap-2 mb-2" style={{ gridTemplateColumns: '28px 1fr 80px 80px 32px' }}>
+        <div />
+        <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Surname</p>
+        <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">No.</p>
+        <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Size</p>
+        <div />
+      </div>
+
+      <div className="space-y-2 max-h-[420px] overflow-y-auto pr-1" style={{ scrollbarWidth: 'thin' }}>
+        {lineup.map((player, index) => {
+          const isFilled = player.surname.trim() && player.jerseyNumber.trim();
+          return (
+            <div key={player.id}
+              className={`grid gap-2 items-center p-2 border transition-all
+                ${isFilled ? 'border-gray-200 bg-white' : 'border-dashed border-gray-200 bg-gray-50'}`}
+              style={{ gridTemplateColumns: '28px 1fr 80px 80px 32px' }}
+            >
+              <div className={`w-7 h-7 flex items-center justify-center text-[10px] font-black rounded-sm shrink-0
+                ${isFilled ? 'bg-[#111] text-white' : 'bg-gray-200 text-gray-400'}`}>
+                {index + 1}
+              </div>
+              <input type="text" value={player.surname}
+                onChange={(e) => handlePlayerChange(index, 'surname', e.target.value.toUpperCase())}
+                placeholder="SURNAME" maxLength={20}
+                className="w-full px-2 py-2 border border-gray-200 text-xs font-bold text-[#111] focus:outline-none focus:border-[#111] bg-white placeholder-gray-300 uppercase" />
+              <input type="text" value={player.jerseyNumber}
+                onChange={(e) => handlePlayerChange(index, 'jerseyNumber', e.target.value.replace(/\D/g, '').slice(0, 3))}
+                placeholder="00" maxLength={3}
+                className="w-full px-2 py-2 border border-gray-200 text-xs font-black text-[#111] text-center focus:outline-none focus:border-[#111] bg-white placeholder-gray-300" />
+              <select value={player.size} onChange={(e) => handlePlayerChange(index, 'size', e.target.value)}
+                className="w-full px-1 py-2 border border-gray-200 text-xs font-bold text-[#111] focus:outline-none focus:border-[#111] bg-white">
+                {SIZES.map(s => <option key={s} value={s}>{s}</option>)}
+              </select>
+              <button onClick={() => removePlayer(index)}
+                className="w-7 h-7 flex items-center justify-center text-gray-300 hover:text-red-400 hover:bg-red-50 transition border border-transparent hover:border-red-100"
+                title="Remove player">
+                <TrashIcon />
+              </button>
+            </div>
+          );
+        })}
+      </div>
+
+      {lineup.length < quantity && (
+        <button onClick={addPlayer}
+          className="mt-3 w-full flex items-center justify-center gap-2 py-2.5 border border-dashed border-gray-300 text-xs font-bold text-gray-400 hover:border-[#111] hover:text-[#111] transition uppercase tracking-widest">
+          <PlusIcon /> Add Player
+        </button>
+      )}
+
+      {lineup.length > quantity && (
+        <div className="mt-3 px-3 py-2 bg-amber-50 border border-amber-200 text-xs text-amber-700 font-medium">
+          ⚠ You have {lineup.length} players but ordered {quantity} jerseys. Extra entries will be ignored.
+        </div>
+      )}
+
+      <div className="mt-4 px-3 py-2.5 bg-gray-50 border border-gray-100">
+        <p className="text-[9px] text-gray-400 leading-relaxed">
+          <span className="font-bold text-gray-500">Tip:</span> Fill in all {quantity} player(s) before continuing. The lineup is optional — leave blank and the admin will contact you to confirm details.
+        </p>
+      </div>
+    </div>
+  );
+};
+
 // ════════════════════════════════════════════════════════════════════════════════
 const FONTS = ['INDUSTRIAL SANS', 'IMPACT', 'ARIAL BLACK', 'BEBAS NEUE', 'OSWALD'];
 
@@ -494,6 +1072,11 @@ export default function CustomizePage() {
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showReview, setShowReview] = useState(false);
+
+  // NEW: track placed order ID + PDF generating state
+  const [placedOrderId, setPlacedOrderId] = useState(null);
+  const [orderPlaced, setOrderPlaced] = useState(false);
+  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
 
   // Colors
   const [primaryColor, setPrimaryColor] = useState('#ffffff');
@@ -516,6 +1099,9 @@ export default function CustomizePage() {
   const [logoFile, setLogoFile] = useState(null);
   const [logoPreview, setLogoPreview] = useState(null);
 
+  // Lineup
+  const [lineup, setLineup] = useState([createEmptyPlayer(0)]);
+
   // Customer
   const [phoneNumber, setPhoneNumber] = useState('');
   const [orderType, setOrderType] = useState('pickup');
@@ -524,6 +1110,16 @@ export default function CustomizePage() {
   });
 
   const totalPrice = selectedProduct ? (selectedProduct.price * (quantity || 0)).toFixed(2) : '0.00';
+
+  useEffect(() => {
+    setLineup(prev => {
+      if (prev.length < quantity) {
+        const extras = Array.from({ length: quantity - prev.length }, (_, i) => createEmptyPlayer(prev.length + i));
+        return [...prev, ...extras];
+      }
+      return prev;
+    });
+  }, [quantity]);
 
   useEffect(() => {
     fetchProducts();
@@ -566,7 +1162,6 @@ export default function CustomizePage() {
     setLogoPreview(compressed);
   };
 
-  // ── Handle product selection — auto-sets apparel type from product name ──────
   const handleProductSelect = (e) => {
     const product = products.find(p => p.id === e.target.value) || null;
     setSelectedProduct(product);
@@ -582,7 +1177,7 @@ export default function CustomizePage() {
       if (!selectedProduct) { toast.error('Please select a product'); return; }
       if (!fabricType) { toast.error('Please select a fabric type'); return; }
     }
-    if (currentStep === 4) { handleShowReview(); return; }
+    if (currentStep === 5) { handleShowReview(); return; }
     goToStep(currentStep + 1);
   };
 
@@ -596,14 +1191,16 @@ export default function CustomizePage() {
         toast.error('Please fill out all shipping address fields'); return;
       }
     }
-    setCompletedSteps(prev => prev.includes(4) ? prev : [...prev, 4]);
+    setCompletedSteps(prev => prev.includes(5) ? prev : [...prev, 5]);
     setShowReview(true);
   };
+
+  const filledLineup = lineup.filter(p => p.surname.trim() || p.jerseyNumber.trim());
 
   const handlePlaceOrder = async () => {
     setIsSubmitting(true);
     try {
-      await apiClient.post('/orders', {
+      const response = await apiClient.post('/orders', {
         userId: user.uid,
         customerName: user.displayName || user.email,
         customerEmail: user.email,
@@ -622,18 +1219,58 @@ export default function CustomizePage() {
           fabricName: fabricType?.name || null,
           customText, jerseyNumber, fontFamily, jerseyLayoutComments,
           logoImage: logoPreview || null,
+          lineup: filledLineup.map(p => ({ surname: p.surname, jerseyNumber: p.jerseyNumber, size: p.size })),
         },
         totalPrice: parseFloat(totalPrice),
         depositAmount: DEPOSIT_AMOUNT,
         depositPaid: false,
         status: 'pending',
       });
+
+      // Save the returned order ID so PDF can use it
+      const newOrderId = response.data?.id || response.data?.orderId || `ORD-${Date.now()}`;
+      setPlacedOrderId(newOrderId);
+      setOrderPlaced(true);
       toast.success('Order placed! Pay the ₱500 deposit to begin layout.');
-      navigate('/orders');
     } catch (error) {
       toast.error('Failed to place order: ' + error.message);
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  // ── PDF download handler ────────────────────────────────────────────────────
+  const handleDownloadJobOrder = async () => {
+    setIsGeneratingPDF(true);
+    try {
+      await generateJobOrderPDF({
+        orderId: placedOrderId,
+        teamName: customText,
+        selectedProduct,
+        fabricType,
+        primaryColor,
+        accentColor,
+        color1, color2, color3,
+        customText,
+        jerseyNumber,
+        fontFamily,
+        jerseyLayoutComments,
+        logoPreview,
+        quantity,
+        filledLineup,
+        phoneNumber,
+        orderType,
+        customerName: user.displayName || user.email,
+        totalPrice,
+        orderDate: new Date().toLocaleDateString('en-PH'),
+        deadline: null, // set if you have a deadline field
+      });
+      toast.success('Job order PDF downloaded!');
+    } catch (err) {
+      toast.error('Failed to generate PDF. Please try again.');
+      console.error(err);
+    } finally {
+      setIsGeneratingPDF(false);
     }
   };
 
@@ -643,7 +1280,56 @@ export default function CustomizePage() {
     </div>
   );
 
-  // ── REVIEW ────────────────────────────────────────────────────────────────────
+  // ── ORDER SUCCESS SCREEN ─────────────────────────────────────────────────────
+  // Shown after order is placed — replaces the old navigate('/orders') so user can download PDF first
+  if (orderPlaced) return (
+    <div className="min-h-screen bg-gray-50 py-12">
+      <div className="max-w-lg mx-auto px-6">
+        <div className="bg-white border border-gray-200 p-8 text-center">
+          {/* Success icon */}
+          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg width="32" height="32" fill="none" stroke="#16a34a" strokeWidth="2.5" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+            </svg>
+          </div>
+          <h2 className="text-2xl font-black text-[#111] uppercase mb-2">Order Placed!</h2>
+          <p className="text-sm text-gray-500 mb-1">Order ID: <span className="font-bold text-[#111]">{placedOrderId}</span></p>
+          <p className="text-xs text-gray-400 mb-6">Pay the ₱500 deposit to begin layout production.</p>
+
+          {/* Deposit reminder */}
+          <div className="mb-6 border border-amber-300 bg-amber-50 rounded p-4 text-left">
+            <p className="text-sm font-bold text-amber-800 mb-1">⚠ Deposit Required</p>
+            <p className="text-xs text-amber-700 leading-relaxed">
+              Please pay <span className="font-bold">₱{DEPOSIT_AMOUNT.toFixed(2)}</span> to start your jersey layout.
+              The remaining <span className="font-bold">₱{(parseFloat(totalPrice) - DEPOSIT_AMOUNT).toFixed(2)}</span> is due upon completion.
+            </p>
+          </div>
+
+          {/* ── DOWNLOAD JOB ORDER PDF BUTTON ── */}
+          <button
+            onClick={handleDownloadJobOrder}
+            disabled={isGeneratingPDF}
+            className="w-full py-3 mb-3 bg-[#111] text-white font-bold text-sm uppercase tracking-widest hover:bg-gray-800 disabled:opacity-60 transition flex items-center justify-center gap-2"
+          >
+            <DownloadIcon />
+            {isGeneratingPDF ? 'Generating PDF...' : 'Download Job Order PDF'}
+          </button>
+          <p className="text-[10px] text-gray-400 mb-4">
+            Print this and hand it to your production team — it includes the lineup, colors, and sign-off fields.
+          </p>
+
+          <button
+            onClick={() => navigate('/orders')}
+            className="w-full py-2.5 border border-gray-300 text-[#111] font-medium text-sm hover:bg-gray-50 transition"
+          >
+            View My Orders →
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
+  // ── REVIEW SCREEN ─────────────────────────────────────────────────────────────
   if (showReview) return (
     <div className="min-h-screen bg-gray-50 py-12">
       <div className="max-w-2xl mx-auto px-6">
@@ -683,6 +1369,7 @@ export default function CustomizePage() {
               ['Font', fontFamily],
               ['Logo', logoFile ? '✓ Uploaded' : 'None'],
               ['Quantity', `${quantity} unit(s)`],
+              ['Lineup', filledLineup.length > 0 ? `${filledLineup.length} player(s) entered` : 'Not provided'],
               ['Phone', phoneNumber],
               ['Order Type', orderType === 'pickup' ? 'Pick Up' : 'Shipping'],
             ].map(([label, value], i) => (
@@ -692,6 +1379,33 @@ export default function CustomizePage() {
               </div>
             ))}
           </div>
+
+          {filledLineup.length > 0 && (
+            <div className="mb-6">
+              <div className="flex items-center gap-2 mb-3">
+                <UsersIcon />
+                <p className="text-xs font-bold text-[#111] uppercase tracking-widest">Team Lineup ({filledLineup.length})</p>
+              </div>
+              <div className="border border-gray-200 overflow-hidden">
+                <div className="grid bg-gray-50 border-b border-gray-200 px-3 py-2" style={{ gridTemplateColumns: '28px 1fr 60px 60px' }}>
+                  {['#', 'Surname', 'No.', 'Size'].map(h => (
+                    <p key={h} className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">{h}</p>
+                  ))}
+                </div>
+                <div className="max-h-64 overflow-y-auto" style={{ scrollbarWidth: 'thin' }}>
+                  {filledLineup.map((p, i) => (
+                    <div key={p.id} className={`grid px-3 py-2 border-b border-gray-50 ${i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`}
+                      style={{ gridTemplateColumns: '28px 1fr 60px 60px' }}>
+                      <span className="text-[10px] font-black text-gray-400">{i + 1}</span>
+                      <span className="text-xs font-bold text-[#111]">{p.surname || '—'}</span>
+                      <span className="text-xs font-black text-[#111]">{p.jerseyNumber || '—'}</span>
+                      <span className="text-xs font-bold text-gray-500">{p.size}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
 
           <div className="bg-gray-50 p-4 mb-6 space-y-2">
             <div className="flex justify-between text-sm"><span className="text-gray-500">Unit Price</span><span>₱{selectedProduct?.price || '—'}</span></div>
@@ -723,7 +1437,7 @@ export default function CustomizePage() {
     </div>
   );
 
-  // ── MAIN ──────────────────────────────────────────────────────────────────────
+  // ── MAIN DESIGN STUDIO ────────────────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-gray-100">
       <div className="max-w-7xl mx-auto px-6 py-8">
@@ -742,17 +1456,12 @@ export default function CustomizePage() {
               {currentStep === 1 && (
                 <div className="space-y-5">
                   <h2 className="text-base font-black text-[#111] uppercase tracking-wide">Colors & Quantity</h2>
-
-                  {/* ── Combined Product / Apparel Type ── */}
                   <div>
                     <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-2">
                       Product / Apparel Type *
                     </label>
-                    <select
-                      value={selectedProduct?.id || ''}
-                      onChange={handleProductSelect}
-                      className="w-full px-3 py-2.5 border border-gray-200 text-sm text-[#111] bg-white focus:outline-none focus:border-[#111]"
-                    >
+                    <select value={selectedProduct?.id || ''} onChange={handleProductSelect}
+                      className="w-full px-3 py-2.5 border border-gray-200 text-sm text-[#111] bg-white focus:outline-none focus:border-[#111]">
                       <option value="">Choose a product...</option>
                       {products.map(p => (
                         <option key={p.id} value={p.id}>{p.name} — ₱{p.price}</option>
@@ -761,17 +1470,14 @@ export default function CustomizePage() {
                     {selectedProduct && (
                       <div className="mt-2 flex items-center gap-1.5">
                         <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-gray-100 border border-gray-200 text-[10px] font-bold text-gray-600 uppercase tracking-wide">
-                          <ShirtIcon />
-                          {selectedProduct.name}
+                          <ShirtIcon />{selectedProduct.name}
                         </span>
                         <span className="text-[10px] text-gray-400 font-medium">₱{selectedProduct.price} / unit</span>
                       </div>
                     )}
                   </div>
 
-                  {/* ── Fabric Dropdown ── */}
                   <FabricDropdown value={fabricType} onChange={setFabricType} />
-
                   <ColorPicker label="Primary Base Color" value={primaryColor} onChange={setPrimaryColor} />
                   <ColorPicker label="Accent Color" value={accentColor} onChange={setAccentColor} />
 
@@ -795,6 +1501,11 @@ export default function CustomizePage() {
                       <button onClick={() => setQuantity(q => Math.min(100, q + 1))}
                         className="w-9 h-9 border border-gray-200 text-[#111] font-bold text-lg flex items-center justify-center hover:bg-gray-50 transition select-none">+</button>
                     </div>
+                    {quantity > 1 && (
+                      <p className="text-[9px] text-blue-500 font-medium mt-1.5">
+                        ℹ You'll fill the player lineup in Step 4
+                      </p>
+                    )}
                   </div>
 
                   {selectedProduct && (
@@ -820,10 +1531,13 @@ export default function CustomizePage() {
                     <p className="text-[9px] text-gray-300 mt-1">{customText.length}/20 characters</p>
                   </div>
                   <div>
-                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-1.5">Jersey Number</label>
+                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-1.5">Default Jersey Number</label>
                     <input type="text" value={jerseyNumber} onChange={(e) => setJerseyNumber(e.target.value.replace(/\D/g, '').slice(0, 3))}
                       placeholder="24" maxLength="3"
                       className="w-24 px-3 py-2.5 border border-gray-200 text-sm font-bold text-[#111] text-center focus:outline-none focus:border-[#111]" />
+                    {quantity > 1 && (
+                      <p className="text-[9px] text-gray-400 mt-1.5">Individual numbers are set per player in Step 4 (Lineup).</p>
+                    )}
                   </div>
                   <div>
                     <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-1.5">Font Family</label>
@@ -879,6 +1593,11 @@ export default function CustomizePage() {
 
               {/* STEP 4 */}
               {currentStep === 4 && (
+                <LineupBuilder quantity={quantity} lineup={lineup} onChange={setLineup} />
+              )}
+
+              {/* STEP 5 */}
+              {currentStep === 5 && (
                 <div className="space-y-5">
                   <h2 className="text-base font-black text-[#111] uppercase tracking-wide">Customer Details</h2>
                   <div>
@@ -944,7 +1663,7 @@ export default function CustomizePage() {
               </button>
               <button onClick={nextStep}
                 className="px-6 py-2.5 bg-[#111] text-white text-sm font-bold uppercase tracking-widest hover:bg-gray-800 transition flex items-center gap-2">
-                {currentStep === 4 ? <><CartIcon /> Review Order</> : 'Next →'}
+                {currentStep === 5 ? <><CartIcon /> Review Order</> : 'Next →'}
               </button>
             </div>
           </div>
