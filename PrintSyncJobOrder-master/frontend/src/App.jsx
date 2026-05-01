@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { useAuthStore } from './store/authStore';
@@ -11,6 +11,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import StorePage from './pages/StorePage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
+import ForgotPasswordPage from './pages/ForgotPasswordPage'; // ← ADD THIS
 import CustomizePage from './pages/CustomizePage';
 import OrdersPage from './pages/OrdersPage';
 import AdminDashboard from './pages/AdminDashboard';
@@ -25,7 +26,6 @@ import LegalPage from './pages/LegalPage';
 
 import './styles/index.css';
 
-// ✅ Waits for Firebase, then redirects logged-in users away from /login and /register
 function GuestRoute({ children }) {
   const { isAuthenticated, isLoading, userRole } = useAuthStore();
 
@@ -45,7 +45,13 @@ function GuestRoute({ children }) {
 }
 
 function App() {
-  const { isLoading } = useAuthStore();
+  const { isLoading, init } = useAuthStore();
+
+  // ✅ FIX 2: Bootstrap Firebase auth listener on mount
+  useEffect(() => {
+    const unsubscribe = init();
+    return unsubscribe; // cleans up when app unmounts
+  }, []);
 
   if (isLoading) {
     return (
@@ -72,6 +78,9 @@ function App() {
         {/* ✅ Guest-only — redirects if already logged in */}
         <Route path="/login" element={<GuestRoute><LoginPage /></GuestRoute>} />
         <Route path="/register" element={<GuestRoute><RegisterPage /></GuestRoute>} />
+
+        {/* ✅ FIX 1: Forgot password was missing — wildcard was catching it */}
+        <Route path="/forgot-password" element={<GuestRoute><ForgotPasswordPage /></GuestRoute>} />
 
         {/* Customer Routes */}
         <Route path="/customize" element={<ProtectedRoute requiredRole="customer"><CustomizePage /></ProtectedRoute>} />

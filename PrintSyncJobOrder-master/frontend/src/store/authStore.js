@@ -1,75 +1,178 @@
 import { create } from 'zustand';
 import { auth, db } from '../utils/firebase';
-import { onAuthStateChanged, signOut, signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
+import {
+  onAuthStateChanged,
+  signOut,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  updateProfile,
+  sendEmailVerification,
+  sendPasswordResetEmail,
+} from 'firebase/auth';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 
-export const useAuthStore = create((set) => {
-  onAuthStateChanged(auth, async (user) => {
-    if (user) {
-      const userDoc = await getDoc(doc(db, 'users', user.uid));
-      set({
-        user: user,
-        userRole: userDoc.data()?.role || 'customer',
-        isAuthenticated: true,
-        isLoading: false,  // ✅ only set false AFTER firebase confirms
-      });
-    } else {
-      set({
-        user: null,
-        userRole: null,
-        isAuthenticated: false,
-        isLoading: false,  // ✅ only set false AFTER firebase confirms
-      });
-    }
-  });
+// ── Use env var so localhost never ships to production ────────────────────────
+const CONTINUE_URL = import.meta.env.VITE_APP_URL
+  ? `${import.meta.env.VITE_APP_URL}/login`
+  : 'http://localhost:5173/login';
 
-  return {
-    user: null,
-    userRole: null,
-    isAuthenticated: false,
-    isLoading: true, // ✅ starts true, waits for onAuthStateChanged
+// Internal flag — prevents the onAuthStateChanged listener from setting
+// isAuthenticated during temporary sign-ins (resend verification flow).
+let _suppressAuthListener = false;
 
-    register: async (email, password, name) => {
-      try {
-        set({ isLoading: true });
-        const result = await createUserWithEmailAndPassword(auth, email, password);
-        await updateProfile(result.user, { displayName: name });
-        await setDoc(doc(db, 'users', result.user.uid), {
-          name,
-          email,
-          role: 'customer',
-          createdAt: new Date(),
+export const useAuthStore = create((set, get) => ({
+  user:            null,
+  userRole:        null,
+  isAuthenticated: false,
+  isLoading:       true,
+
+  // ── Bootstrap ─────────────────────────────────────────────────────────────
+  // Call once in your app root inside a useEffect so the listener is properly
+  // cleaned up when the component unmounts.
+  //
+  //   useEffect(() => {
+  //     const unsub = useAuthStore.getState().init();
+  //     return unsub;
+  //   }, []);
+  //
+  init: () => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      // Skip listener updates during temporary sign-ins (e.g. resend flow)
+      if (_suppressAuthListener) return;
+
+      if (user) {
+        const userDoc = await getDoc(doc(db, 'users', user.uid));
+        const role = userDoc.data()?.role || 'customer';
+
+        // Admins bypass email verification (dummy/test accounts)
+        if (user.emailVerified || role === 'admin') {
+          set({
+            user,
+            userRole:        role,
+            isAuthenticated: true,
+            isLoading:       false,
+          });
+        } else {
+          // Signed in but unverified customer — treat as logged out
+          set({
+            user:            null,
+            userRole:        null,
+            isAuthenticated: false,
+            isLoading:       false,
+          });
+        }
+      } else {
+        set({
+          user:            null,
+          userRole:        null,
+          isAuthenticated: false,
+          isLoading:       false,
         });
-        set({ user: result.user, userRole: 'customer', isAuthenticated: true, isLoading: false });
-        return result.user;
-      } catch (error) {
-        set({ isLoading: false });
-        throw error;
       }
-    },
+    });
 
-    login: async (email, password) => {
-      try {
-        set({ isLoading: true });
-        const result = await signInWithEmailAndPassword(auth, email, password);
-        const userDoc = await getDoc(doc(db, 'users', result.user.uid));
-        set({ user: result.user, userRole: userDoc.data()?.role || 'customer', isAuthenticated: true, isLoading: false });
-        return result.user;
-      } catch (error) {
-        set({ isLoading: false });
-        throw error;
-      }
-    },
+    return unsubscribe; // return so the caller can clean up
+  },
 
-    logout: async () => {
-      try {
-        set({ isLoading: true });
+  // ── Register ──────────────────────────────────────────────────────────────
+  register: async (email, password, name) => {
+    try {
+      set({ isLoading: true });
+
+      const result = await createUserWithEmailAndPassword(auth, email, password);
+
+      await updateProfile(result.user, { displayName: name });
+
+      await setDoc(doc(db, 'users', result.user.uid), {
+        name,
+        email,
+        role:      'customer',
+        createdAt: new Date(),
+      });
+
+      await sendEmailVerification(result.user, { url: CONTINUE_URL });
+
+      // Sign out immediately — user must verify before accessing the app
+      await signOut(auth);
+
+      set({ user: null, userRole: null, isAuthenticated: false, isLoading: false });
+      return result.user;
+    } catch (error) {
+      set({ isLoading: false });
+      throw error;
+    }
+  },
+
+  // ── Login ─────────────────────────────────────────────────────────────────
+  login: async (email, password) => {
+    try {
+      set({ isLoading: true });
+
+      const result = await signInWithEmailAndPassword(auth, email, password);
+
+      // Fetch role first so admins can bypass the email verification requirement
+      const userDoc = await getDoc(doc(db, 'users', result.user.uid));
+      const role = userDoc.data()?.role || 'customer';
+
+      if (!result.user.emailVerified && role !== 'admin') {
         await signOut(auth);
-        set({ user: null, userRole: null, isAuthenticated: false, isLoading: false });
-      } catch (error) {
         set({ isLoading: false });
-        throw error;
+        throw new Error('EMAIL_NOT_VERIFIED');
       }
-    },
-  };
-});
+
+      set({
+        user:            result.user,
+        userRole:        role,
+        isAuthenticated: true,
+        isLoading:       false,
+      });
+
+      return result.user;
+    } catch (error) {
+      set({ isLoading: false });
+      throw error;
+    }
+  },
+
+  // ── Resend verification email ─────────────────────────────────────────────
+  // Suppresses the auth listener during the temporary sign-in so the app
+  // never flickers into an authenticated state.
+  resendVerificationEmail: async (email, password) => {
+    try {
+      _suppressAuthListener = true;
+
+      const result = await signInWithEmailAndPassword(auth, email, password);
+
+      if (!result.user.emailVerified) {
+        await sendEmailVerification(result.user, { url: CONTINUE_URL });
+      }
+
+      await signOut(auth);
+    } catch (error) {
+      throw error;
+    } finally {
+      _suppressAuthListener = false;
+    }
+  },
+
+  // ── Forgot password ───────────────────────────────────────────────────────
+  forgotPassword: async (email) => {
+    try {
+      await sendPasswordResetEmail(auth, email, { url: CONTINUE_URL });
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  // ── Logout ────────────────────────────────────────────────────────────────
+  logout: async () => {
+    try {
+      set({ isLoading: true });
+      await signOut(auth);
+      set({ user: null, userRole: null, isAuthenticated: false, isLoading: false });
+    } catch (error) {
+      set({ isLoading: false });
+      throw error;
+    }
+  },
+}));
