@@ -3,6 +3,7 @@ import apiClient from '../utils/apiClient';
 import { useChatStore } from '../store/chatStore';
 import OrderDetailsModal from '../components/OrderDetailsModal';
 import toast from 'react-hot-toast';
+import { generateJobOrderPDF } from '../utils/generateJobOrderPDF';
 
 /* ─────────────────────────────────────────
    STATUS PIPELINE
@@ -57,6 +58,11 @@ const ChatIcon = () => (
 const CheckIcon = () => (
   <svg width="12" height="12" fill="none" viewBox="0 0 12 12">
     <polyline points="2,6 5,9 10,3" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+  </svg>
+);
+const DownloadIcon = () => (
+  <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3" />
   </svg>
 );
 
@@ -151,7 +157,7 @@ function ProgressTracker({ order, onStatusUpdate, updatingStatus }) {
 /* ─────────────────────────────────────────
    ORDER CARD
 ───────────────────────────────────────── */
-function OrderCard({ order, onStatusUpdate, updatingStatus, onOpenDetail, onOpenChat }) {
+function OrderCard({ order, onStatusUpdate, updatingStatus, onOpenDetail, onOpenChat, onDownloadPDF, isGeneratingPDF }) {
   const [expanded, setExpanded] = useState(false);
   const statusCfg = STATUS_MAP[order.status] || STATUS_MAP['pending'];
   const isPickup  = order.orderType === 'pickup';
@@ -215,6 +221,14 @@ function OrderCard({ order, onStatusUpdate, updatingStatus, onOpenDetail, onOpen
               </p>
             </div>
 
+            <button onClick={() => onDownloadPDF(order)}
+              disabled={isGeneratingPDF === order.id}
+              className="px-3 py-1.5 border border-[#ddd] text-[#555] text-[0.65rem] font-bold uppercase tracking-wider rounded-lg hover:bg-[#f5f5f5] transition-colors flex items-center gap-1 disabled:opacity-50"
+              title="Download Job Order PDF"
+            >
+              <DownloadIcon />
+              {isGeneratingPDF === order.id ? 'PDF...' : 'PDF'}
+            </button>
             <button onClick={() => onOpenDetail(order)}
               className="px-3 py-1.5 bg-[#111] text-white text-[0.65rem] font-bold uppercase tracking-wider rounded-lg hover:bg-[#333] transition-colors">
               Details
@@ -350,6 +364,7 @@ export default function AdminOrders() {
   const [searchQuery, setSearchQuery]               = useState('');
   const [filterStatus, setFilterStatus]             = useState('all');
   const [showFilterDropdown, setShowFilterDropdown] = useState(false);
+  const [generatingPDF, setGeneratingPDF] = useState(null);
   const { openChat } = useChatStore();
 
   useEffect(() => {
@@ -381,6 +396,43 @@ export default function AdminOrders() {
       toast.error('Failed to update order');
     } finally {
       setUpdatingStatus(false);
+    }
+  };
+
+  // ── PDF download handler ────────────────────────────────────────────────────
+  const handleDownloadJobOrder = async (order) => {
+    setGeneratingPDF(order.id);
+    try {
+      await generateJobOrderPDF({
+        orderId: order.id,
+        teamName: order.customizationDetails?.customText || 'TEAM NAME',
+        selectedProduct: order.items?.[0] ? { name: order.items[0].productName, price: order.items[0].price } : null,
+        fabricType: order.customizationDetails?.fabricType ? { name: order.customizationDetails.fabricType } : null,
+        primaryColor: order.customizationDetails?.primaryColor || '#ffffff',
+        accentColor: order.customizationDetails?.accentColor || '#000000',
+        color1: order.customizationDetails?.color1,
+        color2: order.customizationDetails?.color2,
+        color3: order.customizationDetails?.color3,
+        customText: order.customizationDetails?.customText,
+        jerseyNumber: order.customizationDetails?.jerseyNumber || '24',
+        fontFamily: order.customizationDetails?.fontFamily || 'Arial',
+        jerseyLayoutComments: order.customizationDetails?.jerseyLayoutComments,
+        logoPreview: order.customizationDetails?.logoPreview,
+        quantity: order.items?.reduce((sum, item) => sum + (item.quantity || 1), 0) || 1,
+        filledLineup: order.customizationDetails?.lineup || [],
+        phoneNumber: order.phoneNumber,
+        orderType: order.orderType,
+        customerName: order.customerName,
+        totalPrice: order.totalPrice,
+        orderDate: order.createdAt ? new Date(order.createdAt.seconds ? order.createdAt.seconds * 1000 : order.createdAt).toLocaleDateString('en-PH') : new Date().toLocaleDateString('en-PH'),
+        deadline: order.customizationDetails?.deadline || null,
+      });
+      toast.success('Job order PDF downloaded!');
+    } catch (err) {
+      toast.error('Failed to generate PDF. Please try again.');
+      console.error(err);
+    } finally {
+      setGeneratingPDF(null);
     }
   };
 
@@ -494,6 +546,8 @@ export default function AdminOrders() {
                 updatingStatus={updatingStatus}
                 onOpenDetail={(o) => { setSelectedOrder(o); setShowModal(true); }}
                 onOpenChat={openChat}
+                onDownloadPDF={handleDownloadJobOrder}
+                isGeneratingPDF={generatingPDF}
               />
             ))}
           </div>
@@ -539,6 +593,15 @@ export default function AdminOrders() {
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => handleDownloadJobOrder(order)}
+                          disabled={generatingPDF === order.id}
+                          className="text-[0.7rem] font-bold text-[#555] border border-[#e5e7eb] px-3 py-1 rounded-lg hover:bg-[#f5f5f5] transition-colors flex items-center gap-1 disabled:opacity-50"
+                          title="Download Job Order PDF"
+                        >
+                          <DownloadIcon />
+                          {generatingPDF === order.id ? '...' : 'PDF'}
+                        </button>
                         <span className="text-[0.65rem] font-bold px-2.5 py-1 rounded-full"
                           style={{ backgroundColor: cfg?.bg, color: cfg?.text }}>
                           {cfg?.label}
