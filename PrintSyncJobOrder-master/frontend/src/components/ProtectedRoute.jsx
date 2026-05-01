@@ -5,6 +5,7 @@ import { useAuthStore } from '../store/authStore';
 export default function ProtectedRoute({ children, requiredRole }) {
   const { user, userRole, isLoading } = useAuthStore();
 
+  // ✅ Wait for Firebase to confirm auth before making any decision
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -14,11 +15,11 @@ export default function ProtectedRoute({ children, requiredRole }) {
   }
 
   if (!user) {
-    return <Navigate to="/login" />;
+    return <Navigate to="/login" replace />;
   }
 
   if (requiredRole && userRole !== requiredRole) {
-    return <Navigate to="/" />;
+    return <Navigate to="/" replace />;
   }
 
   return children;

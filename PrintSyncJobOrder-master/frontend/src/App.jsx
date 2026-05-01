@@ -17,13 +17,32 @@ import AdminDashboard from './pages/AdminDashboard';
 import AdminProducts from './pages/AdminProducts';
 import AdminOrders from './pages/AdminOrders';
 import AdminReports from './pages/AdminReports';
-import AboutPage from './pages/AboutPage';         // ← ADD
-import PricingPage from './pages/PricingPage';     // ← ADD
-import TemplatesPage from './pages/TemplatesPage'; // ← ADD
-import SupportPage from './pages/SupportPage';     // ← ADD
-import LegalPage from './pages/LegalPage';         // ← ADD
+import AboutPage from './pages/AboutPage';
+import PricingPage from './pages/PricingPage';
+import TemplatesPage from './pages/TemplatesPage';
+import SupportPage from './pages/SupportPage';
+import LegalPage from './pages/LegalPage';
 
 import './styles/index.css';
+
+// ✅ Waits for Firebase, then redirects logged-in users away from /login and /register
+function GuestRoute({ children }) {
+  const { isAuthenticated, isLoading, userRole } = useAuthStore();
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-secondary"></div>
+      </div>
+    );
+  }
+
+  if (isAuthenticated) {
+    return <Navigate to={userRole === 'admin' ? '/admin/dashboard' : '/'} replace />;
+  }
+
+  return children;
+}
 
 function App() {
   const { isLoading } = useAuthStore();
@@ -44,70 +63,29 @@ function App() {
         {/* Public Routes */}
         <Route path="/" element={<StorePage />} />
         <Route path="/store" element={<StorePage />} />
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/register" element={<RegisterPage />} />
-        <Route path="/about" element={<AboutPage />} />         {/* ← ADD */}
-        <Route path="/pricing" element={<PricingPage />} />     {/* ← ADD */}
-        <Route path="/templates" element={<TemplatesPage />} /> {/* ← ADD */}
-        <Route path="/support" element={<SupportPage />} />     {/* ← ADD */}
-        <Route path="/legal" element={<LegalPage />} />         {/* ← ADD */}
+        <Route path="/about" element={<AboutPage />} />
+        <Route path="/pricing" element={<PricingPage />} />
+        <Route path="/templates" element={<TemplatesPage />} />
+        <Route path="/support" element={<SupportPage />} />
+        <Route path="/legal" element={<LegalPage />} />
+
+        {/* ✅ Guest-only — redirects if already logged in */}
+        <Route path="/login" element={<GuestRoute><LoginPage /></GuestRoute>} />
+        <Route path="/register" element={<GuestRoute><RegisterPage /></GuestRoute>} />
 
         {/* Customer Routes */}
-        <Route
-          path="/customize"
-          element={
-            <ProtectedRoute requiredRole="customer">
-              <CustomizePage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/orders"
-          element={
-            <ProtectedRoute requiredRole="customer">
-              <OrdersPage />
-            </ProtectedRoute>
-          }
-        />
+        <Route path="/customize" element={<ProtectedRoute requiredRole="customer"><CustomizePage /></ProtectedRoute>} />
+        <Route path="/orders" element={<ProtectedRoute requiredRole="customer"><OrdersPage /></ProtectedRoute>} />
 
         {/* Admin Routes */}
-        <Route
-          path="/admin/dashboard"
-          element={
-            <ProtectedRoute requiredRole="admin">
-              <AdminDashboard />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/admin/products"
-          element={
-            <ProtectedRoute requiredRole="admin">
-              <AdminProducts />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/admin/orders"
-          element={
-            <ProtectedRoute requiredRole="admin">
-              <AdminOrders />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/admin/reports"
-          element={
-            <ProtectedRoute requiredRole="admin">
-              <AdminReports />
-            </ProtectedRoute>
-          }
-        />
+        <Route path="/admin/dashboard" element={<ProtectedRoute requiredRole="admin"><AdminDashboard /></ProtectedRoute>} />
+        <Route path="/admin/products" element={<ProtectedRoute requiredRole="admin"><AdminProducts /></ProtectedRoute>} />
+        <Route path="/admin/orders" element={<ProtectedRoute requiredRole="admin"><AdminOrders /></ProtectedRoute>} />
+        <Route path="/admin/reports" element={<ProtectedRoute requiredRole="admin"><AdminReports /></ProtectedRoute>} />
 
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
-
       <Footer />
       <FloatingChatWindow />
     </Router>
