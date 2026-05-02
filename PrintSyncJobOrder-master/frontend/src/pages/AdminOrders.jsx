@@ -68,14 +68,12 @@ const PrintIcon = () => (
 
 /* ─────────────────────────────────────────
    ORDER SHEET MODAL
-   Matches the Cheffies-style printable doc
 ───────────────────────────────────────── */
 function OrderSheetModal({ order, isOpen, onClose }) {
   const sheetRef = useRef(null);
 
   if (!isOpen || !order) return null;
 
-  // Derive deadline: 3 days from createdAt, or fallback to order.deadline
   const getDeadline = () => {
     if (order.deadline) return order.deadline;
     try {
@@ -88,43 +86,45 @@ function OrderSheetModal({ order, isOpen, onClose }) {
     } catch { return 'TBD'; }
   };
 
-  // Build player rows from order items
+  // ── Pull lineup from customizationDetails first, fall back to items ──
   const lineup = order.customizationDetails?.lineup || [];
 
   const playerRows = lineup.length > 0
-  ? lineup.map(player => ({
-      name: player.surname || player.name || '—',
-      number: player.jerseyNumber ?? player.number ?? '—',
-      size: player.size || '—',
-      note: player.note || player.ribbing || '',
-    }))
-  : (order.items?.map(item => ({
-      name: item.playerName || item.productName || '—',
-      number: item.jerseyNumber ?? item.number ?? '—',
-      size: item.size || item.variant || '—',
-      note: item.note || item.ribbing || '',
-    })) || []);
+    ? lineup.map(player => ({
+        name:   player.surname      || player.name    || '—',
+        number: player.jerseyNumber ?? player.number  ?? '—',
+        size:   player.size         || '—',
+        note:   player.note         || player.ribbing || '',
+      }))
+    : (order.items?.map(item => ({
+        name:   item.playerName   || item.productName || '—',
+        number: item.jerseyNumber ?? item.number      ?? '—',
+        size:   item.size         || item.variant     || '—',
+        note:   item.note         || item.ribbing     || '',
+      })) || []);
 
-  // Jersey colors from customization or defaults
-  const primaryColor   = order.customizationDetails?.primaryColor || '#F5C518';
+  // ── Colors ──
+  const primaryColor   = order.customizationDetails?.primaryColor  || '#F5C518';
   const secondaryColor = order.customizationDetails?.accentColor
-                    || order.customizationDetails?.secondaryColor
-                    || '#2B8FD6';
+                      || order.customizationDetails?.secondaryColor
+                      || '#2B8FD6';
 
-  const teamName   = order.customizationDetails?.customText
+  // ── Team name ──
+  const teamName = order.customizationDetails?.customText
                 || order.teamName
                 || order.customerName
                 || 'Team Name';
 
-  const fabricType = order.customizationDetails?.jerseyLayoutComments
-                || order.items?.[0]?.productName
-                || order.fabricType
-                || order.productType
-                || 'Sando: Regular Cut';
-  const deadline  = getDeadline();
+  // ── Apparel type (product name) — saved as customizationDetails.apparelType ──
+  const apparelType = order.customizationDetails?.apparelType
+                   || order.items?.[0]?.productName
+                   || '—';
 
-  // Large sizes that get a highlight
-  const largeSizes = new Set(['3XL', '4XL', '5XL', 'XXXL', 'XXXXL']);
+  // ── Fabric name — saved as customizationDetails.fabricName by CustomizePage ──
+  const fabricName = order.customizationDetails?.fabricName || null;
+
+  const deadline = getDeadline();
+  const largeSizes = new Set(['XXL', '3XL', '4XL', '5XL', 'XXXL', 'XXXXL']);
 
   const handlePrint = () => {
     const content = sheetRef.current?.innerHTML;
@@ -199,22 +199,21 @@ function OrderSheetModal({ order, isOpen, onClose }) {
           </div>
         </div>
 
-        {/* Sheet content */}
+        {/* ── Sheet content ── */}
         <div ref={sheetRef} style={{ padding: '32px 36px', fontFamily: "'Barlow', sans-serif" }}>
-
-          {/* Deadline watermark (rotated, left side) */}
           <div style={{ position: 'relative' }}>
+
+            {/* Deadline watermark */}
             <div style={{
               position: 'absolute', left: '-28px', top: '60px',
               transform: 'rotate(-90deg)', transformOrigin: 'left center',
               fontSize: '11px', fontWeight: 600, color: '#888',
               whiteSpace: 'nowrap', letterSpacing: '0.04em',
-              fontFamily: "'Barlow', sans-serif",
             }}>
               DEADLINE: {deadline.toUpperCase()} (12PM)
             </div>
 
-            {/* Header */}
+            {/* ── Header ── */}
             <div style={{ textAlign: 'center', marginBottom: '6px', paddingLeft: '16px' }}>
               <h1 style={{
                 fontFamily: "'Barlow Condensed', sans-serif",
@@ -223,22 +222,52 @@ function OrderSheetModal({ order, isOpen, onClose }) {
               }}>
                 {teamName}
               </h1>
-              <h2 style={{
-                fontFamily: "'Barlow Condensed', sans-serif",
-                fontSize: '14px', fontWeight: 700, color: '#CC1111',
-                letterSpacing: '1.5px', textTransform: 'uppercase',
-                marginTop: '4px', marginBottom: 0,
+
+              {/* Apparel type + fabric type pills */}
+              <div style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                gap: '8px', marginTop: '8px', flexWrap: 'wrap',
               }}>
-                {fabricType}
-              </h2>
+                {/* Apparel type */}
+                <span style={{
+                  fontFamily: "'Barlow Condensed', sans-serif",
+                  fontSize: '12px', fontWeight: 700, color: '#444',
+                  letterSpacing: '1px', textTransform: 'uppercase',
+                  background: '#f4f4f4', padding: '3px 10px',
+                  border: '1px solid #ddd', borderRadius: '4px',
+                }}>
+                  {apparelType}
+                </span>
+
+                {/* Fabric type — only shown if set */}
+                {fabricName && (
+                  <>
+                    <span style={{ color: '#ccc', fontSize: '14px' }}>·</span>
+                    <span style={{
+                      fontFamily: "'Barlow Condensed', sans-serif",
+                      fontSize: '12px', fontWeight: 700, color: '#1e40af',
+                      letterSpacing: '1px', textTransform: 'uppercase',
+                      background: '#eff6ff', padding: '3px 10px',
+                      border: '1px solid #bfdbfe', borderRadius: '4px',
+                    }}>
+                      🧵 {fabricName}
+                    </span>
+                  </>
+                )}
+              </div>
+
+              {/* Customer name + order ID */}
+              <p style={{ marginTop: '6px', fontSize: '11px', color: '#aaa' }}>
+                {order.customerName && order.customerName !== teamName && (
+                  <span>{order.customerName} · </span>
+                )}
+                <span style={{ fontFamily: 'monospace' }}>#{order.id?.substring(0, 10)}</span>
+              </p>
             </div>
 
-            {/* Player table */}
+            {/* ── Player table ── */}
             <div style={{ marginTop: '20px', paddingLeft: '16px' }}>
-              <table style={{
-                width: '100%', borderCollapse: 'collapse',
-                fontSize: '13px', fontFamily: "'Barlow', sans-serif",
-              }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
                 <thead>
                   <tr style={{ background: '#f4f4f4' }}>
                     {['NAME', '#', 'SIZE', 'NOTE'].map(h => (
@@ -272,12 +301,11 @@ function OrderSheetModal({ order, isOpen, onClose }) {
                             borderRadius: isLarge ? '4px' : '0',
                             fontSize: '12px',
                             fontFamily: "'Barlow Condensed', sans-serif",
-                            letterSpacing: '0.5px',
                           }}>
                             {row.size}
                           </span>
                         </td>
-                        <td style={{ border: '1px solid #ddd', padding: '7px 12px', textAlign: 'center', fontSize: '12px', color: '#555', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                        <td style={{ border: '1px solid #ddd', padding: '7px 12px', textAlign: 'center', fontSize: '12px', color: '#555', textTransform: 'uppercase' }}>
                           {row.note}
                         </td>
                       </tr>
@@ -285,12 +313,13 @@ function OrderSheetModal({ order, isOpen, onClose }) {
                   }) : (
                     <tr>
                       <td colSpan={4} style={{ border: '1px solid #ddd', padding: '20px', textAlign: 'center', color: '#bbb', fontSize: '12px' }}>
-                        No items in this order
+                        No lineup provided — contact customer to confirm player details
                       </td>
                     </tr>
                   )}
                 </tbody>
               </table>
+
               {/* Player count + oversized legend */}
               <div style={{ marginTop: '8px', display: 'flex', alignItems: 'center', gap: '16px' }}>
                 <span style={{ fontSize: '11px', color: '#888' }}>
@@ -305,70 +334,83 @@ function OrderSheetModal({ order, isOpen, onClose }) {
               </div>
             </div>
 
-            {/* Jersey preview */}
+            {/* Layout notes */}
+            {order.customizationDetails?.jerseyLayoutComments && (
+              <div style={{ marginTop: '16px', paddingLeft: '16px' }}>
+                <span style={{ fontSize: '10px', fontWeight: 700, color: '#aaa', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                  Layout Notes:
+                </span>
+                <p style={{ marginTop: '4px', fontSize: '12px', color: '#444', fontStyle: 'italic', borderLeft: '3px solid #eee', paddingLeft: '10px', margin: '4px 0 0 0' }}>
+                  {order.customizationDetails.jerseyLayoutComments}
+                </p>
+              </div>
+            )}
+
+            {/* ── Jersey preview ── */}
             <div style={{ marginTop: '28px', paddingLeft: '16px', display: 'flex', justifyContent: 'center' }}>
               <svg width="340" height="200" viewBox="0 0 340 200" xmlns="http://www.w3.org/2000/svg">
-                {/* Left jersey (primary color) */}
                 <g transform="translate(20, 10)">
-                  {/* Body */}
                   <path d="M30 20 L5 50 L25 58 L25 170 L115 170 L115 58 L135 50 L110 20 L90 28 C80 34 60 34 50 28 Z"
                     fill={primaryColor} stroke="rgba(0,0,0,0.15)" strokeWidth="1"/>
-                  {/* Swoosh accent */}
                   <path d="M25 120 Q55 80 115 170" fill="none" stroke={secondaryColor} strokeWidth="8" strokeLinecap="round" opacity="0.6"/>
                   <path d="M25 140 Q60 95 115 170" fill="none" stroke={secondaryColor} strokeWidth="5" strokeLinecap="round" opacity="0.4"/>
-                  {/* Team name */}
-                  <text x="70" y="85" textAnchor="middle"
-                    fontFamily="'Barlow Condensed', sans-serif" fontSize="14" fontWeight="900"
-                    fill={secondaryColor} letterSpacing="1">
+                  <text x="70" y="85" textAnchor="middle" fontFamily="'Barlow Condensed', sans-serif" fontSize="14" fontWeight="900" fill={secondaryColor} letterSpacing="1">
                     {(teamName.split(' ')[0] || teamName).toUpperCase()}
                   </text>
-                  {/* Number */}
-                  <text x="70" y="135" textAnchor="middle"
-                    fontFamily="'Barlow Condensed', sans-serif" fontSize="46" fontWeight="900"
-                    fill={secondaryColor}>
+                  <text x="70" y="135" textAnchor="middle" fontFamily="'Barlow Condensed', sans-serif" fontSize="46" fontWeight="900" fill={secondaryColor}>
                     {playerRows[0]?.number || '14'}
                   </text>
                 </g>
-
-                {/* Divider line */}
                 <line x1="170" y1="10" x2="170" y2="185" stroke="#ccc" strokeWidth="1" strokeDasharray="4 3"/>
-
-                {/* Right jersey (secondary color) */}
                 <g transform="translate(175, 10)">
                   <path d="M30 20 L5 50 L25 58 L25 170 L115 170 L115 58 L135 50 L110 20 L90 28 C80 34 60 34 50 28 Z"
                     fill={secondaryColor} stroke="rgba(0,0,0,0.15)" strokeWidth="1"/>
-                  {/* Swoosh accent */}
                   <path d="M115 120 Q85 80 25 170" fill="none" stroke={primaryColor} strokeWidth="8" strokeLinecap="round" opacity="0.6"/>
                   <path d="M115 140 Q80 95 25 170" fill="none" stroke={primaryColor} strokeWidth="5" strokeLinecap="round" opacity="0.4"/>
-                  {/* Surname */}
-                  <text x="70" y="75" textAnchor="middle"
-                    fontFamily="'Barlow Condensed', sans-serif" fontSize="11" fontWeight="700"
-                    fill={primaryColor} letterSpacing="1">
+                  <text x="70" y="75" textAnchor="middle" fontFamily="'Barlow Condensed', sans-serif" fontSize="11" fontWeight="700" fill={primaryColor} letterSpacing="1">
                     {(playerRows[0]?.name || 'SURNAME').toUpperCase()}
                   </text>
-                  {/* Number */}
-                  <text x="70" y="135" textAnchor="middle"
-                    fontFamily="'Barlow Condensed', sans-serif" fontSize="46" fontWeight="900"
-                    fill={primaryColor}>
+                  <text x="70" y="135" textAnchor="middle" fontFamily="'Barlow Condensed', sans-serif" fontSize="46" fontWeight="900" fill={primaryColor}>
                     {playerRows[0]?.number || '14'}
                   </text>
                 </g>
               </svg>
             </div>
 
-            {/* Color swatches */}
+            {/* ── Color swatches ── */}
             <div style={{ paddingLeft: '16px', display: 'flex', alignItems: 'center', gap: '16px', marginTop: '12px', justifyContent: 'center' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                 <div style={{ width: '18px', height: '18px', borderRadius: '4px', background: primaryColor, border: '1px solid rgba(0,0,0,0.1)' }} />
                 <span style={{ fontSize: '11px', color: '#888', fontFamily: 'monospace' }}>{primaryColor}</span>
+                <span style={{ fontSize: '10px', color: '#bbb' }}>Primary</span>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                 <div style={{ width: '18px', height: '18px', borderRadius: '4px', background: secondaryColor, border: '1px solid rgba(0,0,0,0.1)' }} />
                 <span style={{ fontSize: '11px', color: '#888', fontFamily: 'monospace' }}>{secondaryColor}</span>
+                <span style={{ fontSize: '10px', color: '#bbb' }}>Accent</span>
               </div>
             </div>
 
-            {/* Sign-off section */}
+            {/* ── Delivery + total ── */}
+            <div style={{ marginTop: '16px', paddingLeft: '16px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <span style={{
+                fontSize: '11px', fontWeight: 700, color: '#fff',
+                background: order.orderType === 'pickup' ? '#7c3aed' : '#0284c7',
+                padding: '2px 10px', borderRadius: '20px',
+              }}>
+                {order.orderType === 'pickup' ? '🏬 Pickup' : '🚚 Shipping'}
+              </span>
+              {order.orderType === 'shipping' && order.shippingAddress && (
+                <span style={{ fontSize: '11px', color: '#666' }}>
+                  {order.shippingAddress.firstName} {order.shippingAddress.lastName} — {order.shippingAddress.city}
+                </span>
+              )}
+              <span style={{ fontSize: '11px', color: '#aaa', marginLeft: 'auto' }}>
+                Total: <strong style={{ color: '#111' }}>₱{parseFloat(order.totalPrice || 0).toLocaleString('en-PH')}</strong>
+              </span>
+            </div>
+
+            {/* ── Sign-off ── */}
             <div style={{
               marginTop: '32px', paddingLeft: '16px',
               borderTop: '1px solid #e5e7eb', paddingTop: '20px',
@@ -378,8 +420,8 @@ function OrderSheetModal({ order, isOpen, onClose }) {
                 <div key={role} style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
                   <span style={{
                     fontFamily: "'Barlow Condensed', sans-serif",
-                    fontSize: '11px', fontWeight: 700,
-                    color: '#222', textTransform: 'uppercase', letterSpacing: '0.04em',
+                    fontSize: '11px', fontWeight: 700, color: '#222',
+                    textTransform: 'uppercase', letterSpacing: '0.04em',
                   }}>{role}:</span>
                   <span style={{ fontSize: '11px', color: '#888', marginTop: '20px', borderTop: '0.5px solid #bbb', paddingTop: '3px' }}>
                     Checked by:
@@ -506,7 +548,6 @@ function OrderCard({ order, onStatusUpdate, updatingStatus, onOpenDetail, onOpen
       <div className="h-[3px]" style={{ backgroundColor: statusCfg.color }} />
 
       <div className="p-5">
-        {/* Header */}
         <div className="flex items-start justify-between gap-4 mb-4">
           <div className="flex items-center gap-3 min-w-0">
             <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xl flex-shrink-0"
@@ -545,21 +586,15 @@ function OrderCard({ order, onStatusUpdate, updatingStatus, onOpenDetail, onOpen
                 ₱{parseFloat(order.totalPrice).toLocaleString('en-PH')}
               </p>
             </div>
-
             <button onClick={() => onOpenDetail(order)}
               className="px-3 py-1.5 bg-[#111] text-white text-[0.65rem] font-bold uppercase tracking-wider rounded-lg hover:bg-[#333] transition-colors">
               Details
             </button>
-
-            {/* NEW: Order Sheet button */}
-            <button
-              onClick={() => onOpenSheet(order)}
+            <button onClick={() => onOpenSheet(order)}
               title="View printable order sheet"
-              className="px-3 py-1.5 border border-[#ddd] text-[#555] text-[0.65rem] font-bold uppercase tracking-wider rounded-lg hover:bg-[#f5f5f5] transition-colors flex items-center gap-1"
-            >
+              className="px-3 py-1.5 border border-[#ddd] text-[#555] text-[0.65rem] font-bold uppercase tracking-wider rounded-lg hover:bg-[#f5f5f5] transition-colors flex items-center gap-1">
               <PrintIcon /> Sheet
             </button>
-
             <button onClick={() => onOpenChat(order.id, order.status)}
               className="px-3 py-1.5 border border-[#ddd] text-[#555] text-[0.65rem] font-bold uppercase tracking-wider rounded-lg hover:bg-[#f5f5f5] transition-colors flex items-center gap-1">
               <ChatIcon /> Chat
@@ -571,10 +606,8 @@ function OrderCard({ order, onStatusUpdate, updatingStatus, onOpenDetail, onOpen
           </div>
         </div>
 
-        {/* Progress tracker */}
         <ProgressTracker order={order} onStatusUpdate={onStatusUpdate} updatingStatus={updatingStatus} />
 
-        {/* Expanded section */}
         {expanded && (
           <div className="mt-4 pt-4 border-t border-[#f0f0f0] space-y-3 animate-in">
             <div className="grid grid-cols-2 gap-3">
@@ -598,6 +631,12 @@ function OrderCard({ order, onStatusUpdate, updatingStatus, onOpenDetail, onOpen
                 <p className="text-[0.58rem] text-[#bbb] uppercase tracking-wider mb-0.5">Items</p>
                 <p className="text-[0.78rem] font-semibold text-[#333]">{order.items?.length || 0} item(s)</p>
               </div>
+              {order.customizationDetails?.fabricName && (
+                <div className="bg-blue-50 rounded-xl p-3 col-span-2">
+                  <p className="text-[0.58rem] text-blue-400 uppercase tracking-wider mb-0.5">Fabric Type</p>
+                  <p className="text-[0.78rem] font-semibold text-blue-700">🧵 {order.customizationDetails.fabricName}</p>
+                </div>
+              )}
             </div>
 
             {order.items?.length > 0 && (
@@ -654,7 +693,6 @@ function OrderCard({ order, onStatusUpdate, updatingStatus, onOpenDetail, onOpen
               </button>
             )}
 
-            {/* Quick sheet preview inside expanded card */}
             <button
               onClick={() => onOpenSheet(order)}
               className="w-full py-2 text-[0.75rem] font-bold text-[#555] border border-[#e5e7eb] rounded-xl hover:bg-[#fafafa] transition-colors flex items-center justify-center gap-2"
@@ -694,8 +732,8 @@ export default function AdminOrders() {
   const [loading, setLoading]                       = useState(true);
   const [selectedOrder, setSelectedOrder]           = useState(null);
   const [showModal, setShowModal]                   = useState(false);
-  const [showSheet, setShowSheet]                   = useState(false);   // NEW
-  const [sheetOrder, setSheetOrder]                 = useState(null);    // NEW
+  const [showSheet, setShowSheet]                   = useState(false);
+  const [sheetOrder, setSheetOrder]                 = useState(null);
   const [updatingStatus, setUpdatingStatus]         = useState(false);
   const [expandHistory, setExpandHistory]           = useState(false);
   const [searchQuery, setSearchQuery]               = useState('');
@@ -742,7 +780,6 @@ export default function AdminOrders() {
   const handleMarkForShipping = (id) => handleStatusUpdate(id, 'for-shipping');
   const handleComplete        = (id) => handleStatusUpdate(id, 'completed');
 
-  // NEW: open sheet handler
   const handleOpenSheet = (order) => {
     setSheetOrder(order);
     setShowSheet(true);
@@ -778,7 +815,6 @@ export default function AdminOrders() {
 
       <div className="max-w-5xl mx-auto px-6 py-10">
 
-        {/* ── Header ── */}
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 style={{ fontFamily: "'Syne', sans-serif" }}
@@ -795,7 +831,6 @@ export default function AdminOrders() {
           </div>
         </div>
 
-        {/* ── Stats ── */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">
           <StatCard label="Active"        count={activeOrders.length}                                    color="#111111" icon="📋" />
           <StatCard label="In Production" count={orders.filter(o => o.status === 'in-production').length} color="#8b5cf6" icon="⚙️" />
@@ -803,7 +838,6 @@ export default function AdminOrders() {
           <StatCard label="Completed"     count={completedOrders.length}                                 color="#10b981" icon="🎉" />
         </div>
 
-        {/* ── Search + Filter ── */}
         <div className="flex gap-3 mb-5">
           <div className="flex-1 relative">
             <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#ccc]"><SearchIcon /></span>
@@ -840,7 +874,6 @@ export default function AdminOrders() {
           </div>
         </div>
 
-        {/* ── Active Orders ── */}
         {filteredActive.length > 0 ? (
           <div className="space-y-4 mb-8">
             {filteredActive.map(order => (
@@ -862,7 +895,6 @@ export default function AdminOrders() {
           </div>
         )}
 
-        {/* ── Order History ── */}
         {(completedOrders.length > 0 || rejectedOrders.length > 0) && (
           <div className="bg-white border border-[#e5e7eb] rounded-2xl overflow-hidden">
             <button
@@ -923,7 +955,6 @@ export default function AdminOrders() {
         )}
       </div>
 
-      {/* ── Order Details Modal ── */}
       <OrderDetailsModal
         order={selectedOrder}
         isOpen={showModal}
@@ -938,7 +969,6 @@ export default function AdminOrders() {
         updatingStatus={updatingStatus}
       />
 
-      {/* ── Order Sheet Modal (NEW) ── */}
       <OrderSheetModal
         order={sheetOrder}
         isOpen={showSheet}

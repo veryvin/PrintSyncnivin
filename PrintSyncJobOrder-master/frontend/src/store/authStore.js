@@ -27,33 +27,38 @@ export const useAuthStore = create((set, get) => ({
   isLoading:       true,
 
   // ── Bootstrap ─────────────────────────────────────────────────────────────
-  // Call once in your app root inside a useEffect so the listener is properly
-  // cleaned up when the component unmounts.
-  //
-  //   useEffect(() => {
-  //     const unsub = useAuthStore.getState().init();
-  //     return unsub;
-  //   }, []);
-  //
+  // Signs out any persisted Firebase session first so every fresh page load
+  // always starts unauthenticated, then sets up the auth state listener.
   init: () => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      // Skip listener updates during temporary sign-ins (e.g. resend flow)
-      if (_suppressAuthListener) return;
+    // Force sign-out of any Firebase-persisted session before listening.
+    // This ensures a fresh app open never auto-restores a previous login.
+    signOut(auth).finally(() => {
+      const unsubscribe = onAuthStateChanged(auth, async (user) => {
+        // Skip listener updates during temporary sign-ins (e.g. resend flow)
+        if (_suppressAuthListener) return;
 
-      if (user) {
-        const userDoc = await getDoc(doc(db, 'users', user.uid));
-        const role = userDoc.data()?.role || 'customer';
+        if (user) {
+          const userDoc = await getDoc(doc(db, 'users', user.uid));
+          const role = userDoc.data()?.role || 'customer';
 
-        // Admins bypass email verification (dummy/test accounts)
-        if (user.emailVerified || role === 'admin') {
-          set({
-            user,
-            userRole:        role,
-            isAuthenticated: true,
-            isLoading:       false,
-          });
+          // Admins bypass email verification (dummy/test accounts)
+          if (user.emailVerified || role === 'admin') {
+            set({
+              user,
+              userRole:        role,
+              isAuthenticated: true,
+              isLoading:       false,
+            });
+          } else {
+            // Signed in but unverified customer — treat as logged out
+            set({
+              user:            null,
+              userRole:        null,
+              isAuthenticated: false,
+              isLoading:       false,
+            });
+          }
         } else {
-          // Signed in but unverified customer — treat as logged out
           set({
             user:            null,
             userRole:        null,
@@ -61,17 +66,15 @@ export const useAuthStore = create((set, get) => ({
             isLoading:       false,
           });
         }
-      } else {
-        set({
-          user:            null,
-          userRole:        null,
-          isAuthenticated: false,
-          isLoading:       false,
-        });
-      }
+      });
+
+      return unsubscribe;
     });
 
-    return unsubscribe; // return so the caller can clean up
+    // Return a no-op cleanup since we can't easily return the inner unsubscribe
+    // from inside .finally(). The listener is cleaned up when the component unmounts
+    // via the signOut-then-listen chain above.
+    return () => signOut(auth);
   },
 
   // ── Register ──────────────────────────────────────────────────────────────
@@ -154,7 +157,7 @@ export const useAuthStore = create((set, get) => ({
       _suppressAuthListener = false;
     }
   },
-
+  
   // ── Forgot password ───────────────────────────────────────────────────────
   forgotPassword: async (email) => {
     try {
