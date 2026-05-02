@@ -29,14 +29,15 @@ export const getUserOrders = async (req, res) => {
     try {
       snapshot = await db
         .collection('orders')
-        .where('userId', '==', req.user.uid)
         .orderBy('createdAt', 'desc')
-        .get();
-    } catch (indexError) {
+        .limit(20) // 👈 ADD THIS
+        .get(); 
+       } catch (indexError) {
       // Fallback if composite index not created: fetch without orderBy
       const allOrders = await db
-        .collection('orders')
         .where('userId', '==', req.user.uid)
+        .orderBy('createdAt', 'desc')
+        .limit(20)
         .get();
       const orders = [];
       allOrders.forEach(doc => {
@@ -64,6 +65,7 @@ export const getAllOrders = async (req, res) => {
       snapshot = await db
         .collection('orders')
         .orderBy('createdAt', 'desc')
+        .limit(20)
         .get();
     } catch (indexError) {
       // Fallback if composite index not created: fetch without orderBy
