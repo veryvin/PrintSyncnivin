@@ -89,20 +89,38 @@ function OrderSheetModal({ order, isOpen, onClose }) {
   };
 
   // Build player rows from order items
-  const playerRows = order.items?.map(item => ({
-    name: item.playerName || item.productName || '—',
-    number: item.jerseyNumber ?? item.number ?? '—',
-    size: item.size || item.variant || '—',
-    note: item.note || item.ribbing || '',
-  })) || [];
+  const lineup = order.customizationDetails?.lineup || [];
+
+  const playerRows = lineup.length > 0
+  ? lineup.map(player => ({
+      name: player.surname || player.name || '—',
+      number: player.jerseyNumber ?? player.number ?? '—',
+      size: player.size || '—',
+      note: player.note || player.ribbing || '',
+    }))
+  : (order.items?.map(item => ({
+      name: item.playerName || item.productName || '—',
+      number: item.jerseyNumber ?? item.number ?? '—',
+      size: item.size || item.variant || '—',
+      note: item.note || item.ribbing || '',
+    })) || []);
 
   // Jersey colors from customization or defaults
-  const primaryColor   = order.customizationDetails?.primaryColor   || '#F5C518';
-  const secondaryColor = order.customizationDetails?.secondaryColor  ||
-                         order.customizationDetails?.accentColor     || '#2B8FD6';
+  const primaryColor   = order.customizationDetails?.primaryColor || '#F5C518';
+  const secondaryColor = order.customizationDetails?.accentColor
+                    || order.customizationDetails?.secondaryColor
+                    || '#2B8FD6';
 
-  const teamName  = order.teamName  || order.customerName || 'Team Name';
-  const fabricType = order.fabricType || order.productType  || 'Sando: Regular Cut';
+  const teamName   = order.customizationDetails?.customText
+                || order.teamName
+                || order.customerName
+                || 'Team Name';
+
+  const fabricType = order.customizationDetails?.jerseyLayoutComments
+                || order.items?.[0]?.productName
+                || order.fabricType
+                || order.productType
+                || 'Sando: Regular Cut';
   const deadline  = getDeadline();
 
   // Large sizes that get a highlight
@@ -273,6 +291,18 @@ function OrderSheetModal({ order, isOpen, onClose }) {
                   )}
                 </tbody>
               </table>
+              {/* Player count + oversized legend */}
+              <div style={{ marginTop: '8px', display: 'flex', alignItems: 'center', gap: '16px' }}>
+                <span style={{ fontSize: '11px', color: '#888' }}>
+                  {playerRows.length} player{playerRows.length !== 1 ? 's' : ''} total
+                </span>
+                {playerRows.some(r => largeSizes.has(String(r.size).toUpperCase())) && (
+                  <span style={{ fontSize: '11px', color: '#e91e9c', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <span style={{ display: 'inline-block', width: '10px', height: '10px', borderRadius: '50%', background: '#FF69B4' }} />
+                    Oversized sizes present
+                  </span>
+                )}
+              </div>
             </div>
 
             {/* Jersey preview */}
