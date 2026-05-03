@@ -29,29 +29,28 @@ export const getUserOrders = async (req, res) => {
     try {
       snapshot = await db
         .collection('orders')
-        .orderBy('createdAt', 'desc')
-        .limit(20) // 👈 ADD THIS
-        .get(); 
-       } catch (indexError) {
-      // Fallback if composite index not created: fetch without orderBy
-      const allOrders = await db
         .where('userId', '==', req.user.uid)
         .orderBy('createdAt', 'desc')
-        .limit(20)
         .get();
-      const orders = [];
-      allOrders.forEach(doc => {
-        orders.push({ id: doc.id, ...doc.data() });
-      });
-      // Sort by createdAt in memory
-      orders.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-      return res.json(orders);
+    } catch (indexError) {
+      snapshot = await db
+        .collection('orders')
+        .where('userId', '==', req.user.uid)
+        .get();
     }
-    
+
     const orders = [];
     snapshot.forEach(doc => {
       orders.push({ id: doc.id, ...doc.data() });
     });
+
+    // Sort in memory as a safety net
+    orders.sort((a, b) => {
+      const dateA = a.createdAt?.seconds ? a.createdAt.seconds : new Date(a.createdAt).getTime() / 1000;
+      const dateB = b.createdAt?.seconds ? b.createdAt.seconds : new Date(b.createdAt).getTime() / 1000;
+      return dateB - dateA;
+    });
+
     res.json(orders);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -60,28 +59,28 @@ export const getUserOrders = async (req, res) => {
 
 export const getAllOrders = async (req, res) => {
   try {
+    // ── Admin only — returns ALL orders ───────────────────────────────────
     let snapshot;
     try {
       snapshot = await db
         .collection('orders')
         .orderBy('createdAt', 'desc')
-        .limit(20)
         .get();
     } catch (indexError) {
-      // Fallback if composite index not created: fetch without orderBy
-      snapshot = await db
-        .collection('orders')
-        .get();
+      snapshot = await db.collection('orders').get();
     }
-    
+
     const orders = [];
     snapshot.forEach(doc => {
       orders.push({ id: doc.id, ...doc.data() });
     });
-    
-    // Sort by createdAt in memory if not already sorted
-    orders.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-    
+
+    orders.sort((a, b) => {
+      const dateA = a.createdAt?.seconds ? a.createdAt.seconds : new Date(a.createdAt).getTime() / 1000;
+      const dateB = b.createdAt?.seconds ? b.createdAt.seconds : new Date(b.createdAt).getTime() / 1000;
+      return dateB - dateA;
+    });
+
     res.json(orders);
   } catch (error) {
     res.status(500).json({ error: error.message });
